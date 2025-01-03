@@ -1,0 +1,9 @@
+{
+    projectName: "RAPID PACKAGE",
+    projectId: "RAPID",
+    cpi: 0.5,       //Ranges between 0.0 and 2.0
+    spi: 0.45,        //Ranges between 0.0 and 2.0
+    actualPercentage: 40.30,
+    scheduledPercentage: 80.00,
+    projectDelay: 50
+}
