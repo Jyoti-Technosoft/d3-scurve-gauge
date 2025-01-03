@@ -1,4 +1,5 @@
 import React from "react";
+
 import Gauge from "./GaugeChart";
 import data from "../Json/data.json";
 import "../Styles/Dashboard.css";

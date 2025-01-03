@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
+
 import "../Styles/Gauge.css";
 
 const Gauge = ({ title, value, min, max, colorLogic }) => {

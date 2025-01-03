@@ -1,27 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { actualData, plannedData } from "../Constants/Data";
 
-const SCurveChart = () => {
+import "../Styles/SCurveChart.css";
+
+const SCurveChart = (props) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+  const actualData =
+    props.data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
+  const plannedData =
+    props.data.filter((d) => d.projectType === "BASELINE_PROJECT") || [];
 
-  // Transform data for plotting
   const transformData = (planned, actual, timeInterval) => {
-    // const plannedPoints = planned.map((d) => ({
-    //   date: new Date(d.startDate),
-    //   value: d.baselinePlannedTotalCostPercentage,
-    // }));
-
-    // const actualPoints = actual.map((d) => ({
-    //   date: new Date(d.startDate),
-    //   value: d.physicalProgressPercentage,
-    // }));
     const plannedPoints = groupData(planned, timeInterval);
-
     const actualPoints = groupData(actual, timeInterval);
-    console.log("PLANED DATA ===> ", plannedPoints, actualPoints);
-
     return { plannedPoints, actualPoints };
   };
 
@@ -49,17 +43,23 @@ const SCurveChart = () => {
   };
 
   const calculateVariance = (planned, actual) => {
-    // const plannedPoints = planned.map((d) => ({
-    //   date: new Date(d.startDate),
-    //   value: d.baselinePlannedTotalCostPercentage,
-    // }));
-    // const actualPoints = actual.map((d) => ({
-    //   date: new Date(d.startDate),
-    //   value: d.physicalProgressPercentage,
-    // }));
-    // return { plannedPoints, actualPoints };
     return actual - planned;
   };
+
+  const updateDimensions = () => {
+    const containerWidth = document.querySelector(
+      ".scurve-chart-container"
+    ).clientWidth;
+    setDimensions({ width: containerWidth, height: 500 });
+  };
+
+  useEffect(() => {
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => {
+      window.removeEventListener("resize", updateDimensions);
+    };
+  }, []);
 
   useEffect(() => {
     const { plannedPoints, actualPoints } = transformData(
@@ -67,52 +67,67 @@ const SCurveChart = () => {
       actualData,
       timeInterval
     );
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove(); // Clear previous content
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
-    const width = 800 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = dimensions.width - margin.left - margin.right;
+    const height = dimensions.height - margin.top - margin.bottom;
 
     const xScale = d3
       .scaleTime()
       .domain(d3.extent([...plannedPoints, ...actualPoints], (d) => d.date))
       .range([0, width]);
-
     const yScale = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => d.value)])
       .range([height, 0]);
-
     const yScaleRight = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => d.value)])
       .range([height, 0]);
 
-    // svg
-    //   .append("g")
-    //   .attr("class", "y-axis-right")
-    //   .attr("transform", `translate(${width}, 0)`)
-    //   .call(d3.axisRight(yScaleRight));
-
     const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y"));
-    const yAxis = d3.axisLeft(yScale);
-    const yAxisRight = d3.axisRight(yScaleRight);
+    const yAxis = d3.axisLeft(yScale).tickFormat((d) => `${d}%`);
+    const yAxisRight = d3.axisRight(yScaleRight).tickFormat((d) => `${d}%`);
 
     svg
       .append("g")
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis);
+      svg
+      .append("text")
+      .attr("class", "x-axis-label")
+      .attr("x", width / 2)
+      .attr("y", height + margin.bottom + 10)
+      .attr("text-anchor", "middle")
+      .text("Start Date");
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);
+    svg
+    .append("text")
+    .attr("class", "y-axis1-label")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left)
+    .attr("transform", "rotate(-90)")
+    .attr("text-anchor", "middle")
+    .text("Baseline Planned Total Cost (%)");
+
     svg
       .append("g")
       .attr("class", "y-axis2")
       .attr("transform", `translate(${width}, 0)`)
       .call(yAxisRight);
+    svg
+      .append("text")
+      .attr("class", "y-axis2-label")
+      .attr("x", width + margin.right - 10)
+      .attr("y", height / 2)
+      .attr("transform", `rotate(90, ${width + margin.right + 10}, ${height / 2})`) // Rotate at the label position
+      .attr("text-anchor", "middle")
+      .text("Physical Progress (%)");
 
-    // Create tooltip
     const tooltip = svg
       .append("text")
       .attr("class", "tooltip")
@@ -120,7 +135,13 @@ const SCurveChart = () => {
       .attr("y", 0)
       .style("visibility", "hidden");
 
-    // Create vertical line
+    const tooltipVariance = svg
+      .append("text")
+      .attr("class", "tooltip")
+      .attr("x", 0)
+      .attr("y", 0)
+      .style("visibility", "hidden");
+
     const line = svg
       .append("line")
       .attr("class", "vertical-line")
@@ -129,10 +150,9 @@ const SCurveChart = () => {
       .attr("stroke-width", "3px")
       .style("visibility", "hidden");
 
-    // Mouse move event
     svg.on("mousemove", function (event) {
       const [mouseX] = d3.pointer(event);
-      const xDate = xScale.invert(mouseX); // Get the date from the X scale
+      const xDate = xScale.invert(mouseX);
       const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
         return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
           ? curr
@@ -143,30 +163,27 @@ const SCurveChart = () => {
           ? curr
           : prev;
       });
-
-      // Get the Y value for the closest point
       const yValuePlanned = closestPlannedPoint
         ? closestPlannedPoint.value
         : null;
       const yValueActual = closestActualPoint ? closestActualPoint.value : null;
 
-      // Update tooltip position and text
       tooltip
         .attr("x", mouseX)
-        .attr("y", yScale(yValuePlanned || yValueActual)) // Use the Y value of the closest point
-        // .text(
-        //   `Status Date: ${d3.timeFormat("%b %d, %Y")(xDate)} | Planned: ${
-        //     yValuePlanned.toFixed(2) || 0
-        //   } | Actual: ${yValueActual.toFixed(2) || 0}`
-        // )
-        .text(
-          `Status Date: ${d3.timeFormat("%b %d, %Y")(xDate)} | Variance: ${
-            calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0
-          }`
-        )
-        .style("visibility", "visible");
+        .attr("y", yScale(yValuePlanned || yValueActual))
+        .text(`Status Date: ${d3.timeFormat("%m/%d/%Y")(xDate)}`)
+        .style("visibility", "visible")
+        .style("fill", "red");
 
-      // Update vertical line position
+      const variance =
+        calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
+      tooltipVariance
+        .attr("x", 50)
+        .attr("y", 50)
+        .text(`Variance: ${variance}%`)
+        .style("visibility", "visible")
+        .style("fill", variance > 0 ? "green" : "red");
+
       line
         .attr("x1", mouseX)
         .attr("y1", margin.top)
@@ -175,7 +192,6 @@ const SCurveChart = () => {
         .style("visibility", "visible");
     });
 
-    // Mouse out event
     svg.on("mouseout", function () {
       tooltip.style("visibility", "hidden");
       line.style("visibility", "hidden");
@@ -185,12 +201,6 @@ const SCurveChart = () => {
       .line()
       .x((d) => xScale(d.date))
       .y((d) => yScale(d.value));
-
-    const lineActual = d3
-      .line()
-      .x((d) => xScale(d.date))
-      .y((d) => yScale(d.value));
-
     svg
       .append("path")
       .datum(plannedPoints)
@@ -200,6 +210,10 @@ const SCurveChart = () => {
       .attr("stroke", "#00FF00")
       .attr("stroke-width", 4);
 
+    const lineActual = d3
+      .line()
+      .x((d) => xScale(d.date))
+      .y((d) => yScale(d.value));
     svg
       .append("path")
       .datum(actualPoints)
@@ -208,16 +222,41 @@ const SCurveChart = () => {
       .attr("fill", "none")
       .attr("stroke", "#2F5233")
       .attr("stroke-width", 4);
-  }, [timeInterval]);
+  }, [timeInterval, dimensions]);
 
   return (
-    <div>
-      <div>
-        <button onClick={() => setTimeInterval("daily")}>Daily</button>
-        <button onClick={() => setTimeInterval("weekly")}>Weekly</button>
-        <button onClick={() => setTimeInterval("monthly")}>Monthly</button>
+    <div className="scurve-chart-container">
+      <h2 className="chart-title">S-Curve</h2>
+
+    <div className="legend-filter">
+      <div className="legends">
+        <div className="legend">
+          <span className="legend-icon planned"></span>
+          Planned %
+        </div>
+        <div className="legend">
+          <span className="legend-icon actual"></span>
+          Actual %
+        </div>
       </div>
-      <svg ref={svgRef} width={730} height={400}></svg>
+
+      <div className="dropdown-container">
+        <select
+          className="dropdown"
+          value={timeInterval}
+          onChange={(e) => setTimeInterval(e.target.value)}
+        >
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+    </div>
+      <svg
+        ref={svgRef}
+        width={dimensions.width}
+        height={dimensions.height}
+      ></svg>
     </div>
   );
 };
