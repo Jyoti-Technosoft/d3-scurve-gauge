@@ -47,6 +47,24 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
     return actual - planned;
   };
 
+  const getActualPlannedYPoints = (plannedPoints, actualPoints, xDate) => {
+    const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
+      return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
+        ? curr
+        : prev;
+    });
+    const closestActualPoint = actualPoints.reduce((prev, curr) => {
+      return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
+        ? curr
+        : prev;
+    });
+    const yValuePlanned = closestPlannedPoint
+      ? closestPlannedPoint.value
+      : null;
+    const yValueActual = closestActualPoint ? closestActualPoint.value : null;
+    return {yValuePlanned, yValueActual};
+  }
+
   const updateDimensions = () => {
     const containerWidth = document.querySelector(
       ".scurve-chart-container"
@@ -129,12 +147,18 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .attr("text-anchor", "middle")
       .text(yAxisTitleRight);
 
-    const tooltip = svg
-      .append("text")
+    d3.selectAll(".tooltip").remove();
+    const tooltip = d3.select("body")
+      .append("div")
       .attr("class", "tooltip")
-      .attr("x", 0)
-      .attr("y", 0)
-      .style("visibility", "hidden");
+      .style("position", "absolute")
+      .style("visibility", "hidden")
+      .style("background-color", "white")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "4px")
+      .style("font-size", "14px")
+      .style("padding", "10px")
+      .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
 
     const tooltipVariance = svg
       .append("text")
@@ -154,28 +178,17 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
     svg.on("mousemove", function (event) {
       const [mouseX] = d3.pointer(event);
       const xDate = xScale.invert(mouseX);
-      const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
-        return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
-          ? curr
-          : prev;
-      });
-      const closestActualPoint = actualPoints.reduce((prev, curr) => {
-        return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
-          ? curr
-          : prev;
-      });
-      const yValuePlanned = closestPlannedPoint
-        ? closestPlannedPoint.value
-        : null;
-      const yValueActual = closestActualPoint ? closestActualPoint.value : null;
+      const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
 
       tooltip
-        .attr("x", mouseX)
-        .attr("y", yScale(yValuePlanned || yValueActual))
-        .text(`Status Date: ${d3.timeFormat("%m/%d/%Y")(xDate)}`)
-        .style("visibility", "visible")
-        .style("fill", "red");
-
+        .html(`
+          <strong>Status Date:</strong> ${d3.timeFormat("%m/%d/%Y")(xDate)}<br>
+          <strong>Planned Cost (%):</strong> ${yValuePlanned.toFixed(2)}<br>
+          <strong>Actual Cost (%):</strong> ${yValueActual.toFixed(2)}<br>
+        `)
+        .style("left", `${mouseX + 10}px`) // Offset slightly to the right
+        .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
+        .style("visibility", "visible");
       const variance =
         calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
       tooltipVariance
@@ -196,6 +209,17 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
     svg.on("mouseout", function () {
       tooltip.style("visibility", "hidden");
       line.style("visibility", "hidden");
+      const xPos = xScale(new Date(jsonData.statusDate));
+      const xDate = xScale.invert(xPos);
+      const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
+      const variance =
+          calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
+      tooltipVariance
+        .attr("x", 50)
+        .attr("y", 50)
+        .text(`Variance: ${variance}%`)
+        .style("visibility", "visible")
+        .style("fill", variance > 0 ? "green" : "red");
     });
 
     const linePlanned = d3
@@ -226,8 +250,10 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
 
       if (actualPoints.length > 0) {
         const lastPoint = actualPoints[actualPoints.length - 1];
-        const xPos = xScale(lastPoint.date);
-        const yPos = yScale(lastPoint.value);
+        const xPos = xScale(new Date(jsonData.statusDate));
+        const xDate = xScale.invert(xPos);
+        const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
+        const yPos = yValueActual ? yScale(yValueActual)  : yScale(lastPoint.value);
     
         svg
           .append("text")
@@ -249,6 +275,15 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
           .attr("stroke-dasharray", "10,10")
           .attr("stroke-width", "3px")
           .style("visibility", "visible");
+
+        const variance =
+          calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
+        tooltipVariance
+          .attr("x", 50)
+          .attr("y", 50)
+          .text(`Variance: ${variance}%`)
+          .style("visibility", "visible")
+          .style("fill", variance > 0 ? "green" : "red");
       }
   }, [timeInterval, dimensions]);
 
