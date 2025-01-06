@@ -100,7 +100,22 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       ))])
       .range([height, 0]);
 
-    const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y"));
+    const xAxis = d3.axisBottom(xScale);
+    let timeFormat = "%d %b";
+    if (timeInterval === "weekly") {
+        const weekNumberFormatter = (d) => {
+            const weekNumber = d3.timeFormat("%U")(d); // Get the week number (starts from 0)
+            const year = d3.timeFormat("%Y")(d); // Get the year
+            return `Week ${+weekNumber + 1}, ${year}`; // Increment by 1 to start from 1
+        };
+        xAxis.tickFormat(weekNumberFormatter);
+    } else {
+        if (timeInterval === "monthly") {
+            timeFormat = "%b %Y";
+        }
+        xAxis.tickFormat(d3.timeFormat(timeFormat));
+    }
+    // const xAxis = d3.axisBottom(xScale).tickFormat(timeInterval === "weekly" ? timeFormat : d3.timeFormat(timeFormat));
     const yAxis = d3.axisLeft(yScale).tickFormat((d) => {
         if (d >= 1e9) {
           return `$${(d / 1e9).toFixed(2)}B`;
