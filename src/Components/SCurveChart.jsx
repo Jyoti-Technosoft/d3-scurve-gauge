@@ -80,11 +80,11 @@ const SCurveChart = ({ data }) => {
       .range([0, width]);
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => d.value)])
+      .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(d.value, 100))])
       .range([height, 0]);
     const yScaleRight = d3
       .scaleLinear()
-      .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => d.value)])
+      .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(d.value, 100))])
       .range([height, 0]);
 
     const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat("%b %Y"));

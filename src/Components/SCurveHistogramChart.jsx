@@ -34,14 +34,14 @@ const SCurveHistogramChart = ({ data }) => {
 
     return Array.from(groupedData, ([key, values]) => {
       const totalPlanned = d3.sum(values, (d) =>
-        d.cumSumActualCost
-          ? d.cumSumActualCost
-          : d.cumSumBaselinePlannedTotalCost
+        d.sumBaselinePlannedTotalCost ? d.sumBaselinePlannedTotalCost : d.sumActualCost
       );
-      if (values.length > 0 && values[0]) {
-        return {...values[0], startDate: key }        
+      if (values.length > 0 && values[0].sumBaselinePlannedTotalCost) {
+        return {...values[0], startDate: key, sumBaselinePlannedTotalCost: totalPlanned }
+      } else if (values.length > 0 && values[0].sumActualCost) {
+        return {...values[0], startDate: key, sumActualCost: totalPlanned }
       }
-      return { date: key, value: totalPlanned };
+      // return { date: key, value: totalPlanned };
     });
   };
 
