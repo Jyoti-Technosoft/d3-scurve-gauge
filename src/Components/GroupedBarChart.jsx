@@ -83,7 +83,9 @@ const GroupedBarChart = ({ data }) => {
     const yScale = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(
+        d.cumSumActualCost || 0,
         d.sumActualCost || 0,
+        d.cumSumBaselinePlannedTotalCost || 0,
         d.sumBaselinePlannedTotalCost || 0
       ))])
       .range([height, 0]);
@@ -91,9 +93,9 @@ const GroupedBarChart = ({ data }) => {
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(
         // d.value || 0,
-        // d.cumSumActualCost || 0,
+        d.cumSumActualCost || 0,
         d.sumActualCost || 0,
-        // d.cumSumBaselinePlannedTotalCost || 0,
+        d.cumSumBaselinePlannedTotalCost || 0,
         d.sumBaselinePlannedTotalCost || 0
       ))])
       .range([height, 0]);
@@ -227,31 +229,33 @@ const GroupedBarChart = ({ data }) => {
     //   line.style("visibility", "hidden");
     // });
 
-    // const linePlanned = d3
-    //   .line()
-    //   .x((d) => xScale(d.startDate))
-    //   .y((d) => yScale(d.cumSumBaselinePlannedTotalCost));
-    // svg
-    //   .append("path")
-    //   .datum(plannedPoints)
-    //   .attr("class", "line planned")
-    //   .attr("d", linePlanned)
-    //   .attr("fill", "none")
-    //   .attr("stroke", "purple")
-    //   .attr("stroke-width", 4);
+    const linePlanned = d3
+      .line()
+      .x((d) => xScale(d.startDate))
+      .y((d) => yScale(d.cumSumBaselinePlannedTotalCost));
+    svg
+      .append("path")
+      .datum(plannedPoints)
+      .attr("class", "line planned")
+      .attr("d", linePlanned)
+      .attr("fill", "none")
+      .attr("stroke", "purple")
+      .attr("stroke-width", 4)
+      .attr("stroke-dasharray", "7,7"); // Add this for a dashed line
 
-    // const lineActual = d3
-    //   .line()
-    //   .x((d) => xScale(d.startDate))
-    //   .y((d) => yScale(d.cumSumActualCost));
-    // svg
-    //   .append("path")
-    //   .datum(actualPoints)
-    //   .attr("class", "line actual")
-    //   .attr("d", lineActual)
-    //   .attr("fill", "none")
-    //   .attr("stroke", "yellow")
-    //   .attr("stroke-width", 4);
+    const lineActual = d3
+      .line()
+      .x((d) => xScale(d.startDate))
+      .y((d) => yScale(d.cumSumActualCost));
+    svg
+      .append("path")
+      .datum(actualPoints)
+      .attr("class", "line actual")
+      .attr("d", lineActual)
+      .attr("fill", "none")
+      .attr("stroke", "yellow")
+      .attr("stroke-width", 4)
+      .attr("stroke-dasharray", "7,7"); // Add this for a dashed line
     // Bar width for the chart
     let barWidth = 5;
     if (timeInterval === "weekly") {
@@ -291,7 +295,7 @@ const GroupedBarChart = ({ data }) => {
 
   return (
     <div className="scurve-chart-container">
-      <h2 className="chart-title">S-Curve</h2>
+      <h2 className="chart-title">Cost Performance Summary</h2>
 
     <div className="legend-filter">
       <div className="legends">
