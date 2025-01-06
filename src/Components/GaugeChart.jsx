@@ -3,7 +3,7 @@ import * as d3 from "d3";
 
 import "../Styles/Gauge.css";
 
-const Gauge = ({ title, value, min, max }) => {
+const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = false, colorLogic }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -18,19 +18,21 @@ const Gauge = ({ title, value, min, max }) => {
       .attr("height", height)
       .append("g")
       .attr("transform", `translate(${width / 2}, ${height / 2})`);
-    const defs = svg.append("defs");
+    if (enableGradient) {
+        const defs = svg.append("defs");
 
-    // Define the gradient
-    const gradient = defs
-      .append("linearGradient")
-      .attr("id", "gauge-gradient")
-      .attr("x1", "0%")
-      .attr("x2", "100%")
-      .attr("y1", "0%")
-      .attr("y2", "0%");
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", "red");
-    gradient.append("stop").attr("offset", "50%").attr("stop-color", "orange");
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", "green");
+        // Define the gradient
+        const gradient = defs
+            .append("linearGradient")
+            .attr("id", "gauge-gradient")
+            .attr("x1", "0%")
+            .attr("x2", "100%")
+            .attr("y1", "0%")
+            .attr("y2", "0%");
+        gradient.append("stop").attr("offset", "0%").attr("stop-color", "red");
+        gradient.append("stop").attr("offset", "50%").attr("stop-color", "orange");
+        gradient.append("stop").attr("offset", "100%").attr("stop-color", "green");
+      }
 
     const backgroundArc = d3
       .arc()
@@ -41,7 +43,7 @@ const Gauge = ({ title, value, min, max }) => {
     svg
       .append("path")
       .attr("d", backgroundArc)
-      .attr("fill", "url(#gauge-gradient)");
+      .attr("fill", enableGradient ? "url(#gauge-gradient)" : "#f3f2f1")
 
     const scale = d3
       .scaleLinear()
@@ -53,7 +55,8 @@ const Gauge = ({ title, value, min, max }) => {
       .outerRadius(radius)
       .startAngle(-Math.PI / 2)
       .endAngle(scale(value));
-    svg.append("path").attr("d", foregroundArc).attr("fill", "transparent");
+    const fillColor = colorLogic(value)
+    svg.append("path").attr("d", foregroundArc).attr("fill", enableGradient ? "transparent" : fillColor);
 
     let displayValue;
     if (min === 0 && max === 1) {
@@ -61,92 +64,152 @@ const Gauge = ({ title, value, min, max }) => {
     } else {
       displayValue = value.toFixed(2);
     }
-    
-    // Compute the needle angle based on the value
-    const needleAngle = scale(value);
 
-    // Add the label dynamically at the needle's tip
-    svg
-    .append("text")
-    .attr("x", 0)
-    .attr("y", -(radius - arcWidth + 40))
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("fill", "#919392")
-    .text(displayValue)
-    .attr("transform", `rotate(${(needleAngle * 180) / Math.PI})`);
+    if (enableNeedle) {
+        // Compute the needle angle based on the value
+        const needleAngle = scale(value);
 
-    const angle0 = -Math.PI / 2;
-    const angle1 = Math.PI / 2;
-    if (min === 0 && max === 1) {
-      svg
-        .append("text")
-        .attr("x", (radius - 20) * Math.cos(angle0))
-        .attr("y", (radius - 20) * Math.sin(angle0))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("fill", "#919392")
-        .style("writing-mode", "tb")
-        .text("0%")
-        .attr("transform", "rotate(-90) translate(-10,-5)");
-      svg
-        .append("text")
-        .attr("x", (radius - 20) * Math.cos(angle1))
-        .attr("y", (radius - 20) * Math.sin(angle1))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("fill", "#919392")
-        .style("writing-mode", "tb")
-        .text("100%")
-        .attr("transform", "rotate(-90) translate(-10,8)");
+        // Add the label dynamically at the needle's tip
+        svg
+            .append("text")
+            .attr("x", 0)
+            .attr("y", -(radius - arcWidth + 40))
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("fill", "#919392")
+            .text(displayValue)
+            .attr("transform", `rotate(${(needleAngle * 180) / Math.PI})`);
+
+        const angle0 = -Math.PI / 2;
+        const angle1 = Math.PI / 2;
+        if (min === 0 && max === 1) {
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle0))
+                .attr("y", (radius - 20) * Math.sin(angle0))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392")
+                .style("writing-mode", "tb")
+                .text("0%")
+                .attr("transform", "rotate(-90) translate(-10,-5)");
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle1))
+                .attr("y", (radius - 20) * Math.sin(angle1))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392")
+                .style("writing-mode", "tb")
+                .text("100%")
+                .attr("transform", "rotate(-90) translate(-10,8)");
+        } else {
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle0))
+                .attr("y", (radius - 20) * Math.sin(angle0))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392")
+                .style("writing-mode", "tb")
+                .text("0")
+                .attr("transform", "rotate(-90) translate(-10,-5)");
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle1))
+                .attr("y", (radius - 20) * Math.sin(angle1))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392")
+                .style("writing-mode", "tb")
+                .text("2")
+                .attr("transform", "rotate(-90) translate(-10,8)");
+        }
+
+        // Add this portion to append the needle
+        const needleLength = radius - 40; // Adjust needle length
+        const needleWidth = 4; // Needle width
+
+        // Create the needle group
+        const needleGroup = svg
+            .append("g")
+            .attr("transform", `rotate(${(needleAngle * 180) / Math.PI})`);
+
+        // Append the needle shape
+        needleGroup
+            .append("rect")
+            .attr("x", -needleWidth / 2) // Center the needle
+            .attr("y", -(radius - arcWidth - 10)) // Start near the center
+            .attr("width", needleWidth)
+            .attr("height", needleLength)
+            .attr("fill", "black");
+        // Add a circle at the needle's base
+        svg
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("r", 6)
+            .attr("fill", "black");
+
     } else {
-      svg
-        .append("text")
-        .attr("x", (radius - 20) * Math.cos(angle0))
-        .attr("y", (radius - 20) * Math.sin(angle0))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("fill", "#919392")
-        .style("writing-mode", "tb")
-        .text("0")
-        .attr("transform", "rotate(-90) translate(-10,-5)");
-      svg
-        .append("text")
-        .attr("x", (radius - 20) * Math.cos(angle1))
-        .attr("y", (radius - 20) * Math.sin(angle1))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("fill", "#919392")
-        .style("writing-mode", "tb")
-        .text("2")
-        .attr("transform", "rotate(-90) translate(-10,8)");
+        svg
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "-0.8em")
+            .style("font-size", "24px")
+            .style("fill", "#919392") 
+            .text(displayValue);
+
+        const angle0 = -Math.PI / 2;
+        const angle1 = Math.PI / 2;
+
+        if (min === 0 && max === 1) {
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle0))
+                .attr("y", (radius - 20) * Math.sin(angle0))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392") 
+                .style("writing-mode", "tb")
+                .text("0%")
+                .attr("transform", "rotate(-90) translate(-10,-5)");
+
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle1))
+                .attr("y", (radius - 20) * Math.sin(angle1))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392") 
+                .style("writing-mode", "tb")
+                .text("100%")
+                .attr("transform", "rotate(-90) translate(-10,8)");
+        } else {
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle0))
+                .attr("y", (radius - 20) * Math.sin(angle0))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392") 
+                .style("writing-mode", "tb")
+                .text("0")
+                .attr("transform", "rotate(-90) translate(-10,-5)");
+
+            svg
+                .append("text")
+                .attr("x", (radius - 20) * Math.cos(angle1))
+                .attr("y", (radius - 20) * Math.sin(angle1))
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("fill", "#919392") 
+                .style("writing-mode", "tb")
+                .text("2")
+                .attr("transform", "rotate(-90) translate(-10,8)");
+        }
     }
-
-    // Add this portion to append the needle
-    const needleLength = radius - 40; // Adjust needle length
-    const needleWidth = 4; // Needle width
-
-    // Create the needle group
-    const needleGroup = svg
-      .append("g")
-      .attr("transform", `rotate(${(needleAngle * 180) / Math.PI})`);
-
-    // Append the needle shape
-    needleGroup
-      .append("rect")
-      .attr("x", -needleWidth / 2) // Center the needle
-      .attr("y", -(radius - arcWidth - 10)) // Start near the center
-      .attr("width", needleWidth)
-      .attr("height", needleLength)
-      .attr("fill", "black");
-    // Add a circle at the needle's base
-    svg
-      .append("circle")
-      .attr("cx", 0)
-      .attr("cy", 0)
-      .attr("r", 6)
-      .attr("fill", "black");
-  }, [value, min, max]);
+  }, [value, min, max, colorLogic, enableGradient, enableNeedle]);
 
   return (
     <div className="gauge-container">
