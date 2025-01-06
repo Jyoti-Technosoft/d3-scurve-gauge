@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
+import jsonData from "../Json/data.json";
 import "../Styles/SCurveChart.css";
 
 const SCurveChart = ({ data }) => {
@@ -222,6 +223,33 @@ const SCurveChart = ({ data }) => {
       .attr("fill", "none")
       .attr("stroke", "#2F5233")
       .attr("stroke-width", 4);
+
+      if (actualPoints.length > 0) {
+        const lastPoint = actualPoints[actualPoints.length - 1];
+        const xPos = xScale(lastPoint.date);
+        const yPos = yScale(lastPoint.value);
+    
+        svg
+          .append("text")
+          .attr("class", "fix-tooltip")
+          .attr("x", xPos + 10)
+          .attr("y", yPos - 10)
+          .text(`Status Date: ${jsonData.statusDate}`)
+          .style("fill", "red")
+          .style("visibility", "visible");
+    
+        svg
+          .append("line")
+          .attr("class", "fix-line")
+          .attr("x1", xPos)
+          .attr("y1", margin.top)
+          .attr("x2", xPos)
+          .attr("y2", height + margin.top)
+          .attr("stroke", "red")
+          .attr("stroke-dasharray", "10,10")
+          .attr("stroke-width", "3px")
+          .style("visibility", "visible");
+      }
   }, [timeInterval, dimensions]);
 
   return (
