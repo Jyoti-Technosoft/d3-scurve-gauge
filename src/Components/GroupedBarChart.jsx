@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import "../Styles/SCurveChart.css";
+import "../Styles/GroupedBarChart.css";
 
-const GroupedBarChart = ({ data }) => {
+const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
@@ -50,7 +50,7 @@ const GroupedBarChart = ({ data }) => {
 
   const updateDimensions = () => {
     const containerWidth = document.querySelector(
-      ".scurve-chart-container"
+      ".grouped-bar-container"
     ).clientWidth;
     setDimensions({ width: containerWidth, height: 500 });
   };
@@ -134,7 +134,7 @@ const GroupedBarChart = ({ data }) => {
       .attr("x", width / 2)
       .attr("y", height + margin.bottom + 10)
       .attr("text-anchor", "middle")
-      .text("Start Date");
+      .text(xAxisTitle);
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);
     svg
@@ -144,7 +144,7 @@ const GroupedBarChart = ({ data }) => {
         .attr("y", -margin.left)
         .attr("transform", "rotate(-90)")
         .attr("text-anchor", "middle")
-        .text("Baseline Planned Total Cost (%)");
+        .text(yAxisTitleLeft);
 
     svg
       .append("g")
@@ -158,7 +158,7 @@ const GroupedBarChart = ({ data }) => {
       .attr("y", height / 2)
       .attr("transform", `rotate(90, ${width + margin.right + 10}, ${height / 2})`) // Rotate at the label position
       .attr("text-anchor", "middle")
-      .text("Physical Progress (%)");
+      .text(yAxisTitleRight);
 
     // const tooltip = svg
     //   .append("text")
@@ -294,18 +294,26 @@ const GroupedBarChart = ({ data }) => {
   }, [timeInterval, dimensions]);
 
   return (
-    <div className="scurve-chart-container">
-      <h2 className="chart-title">Cost Performance Summary</h2>
+    <div className="grouped-bar-container">
+      <h2 className="chart-title">{chartTitle}</h2>
 
-    <div className="legend-filter">
+      <div className="legend-filter">
       <div className="legends">
+        {/* <div className="legend">
+          <span className="legend-icon budgeted"></span>
+          Budgeted %
+        </div> */}
+        <div className="legend">
+          <span className="legend-icon actual"></span>
+          Actual %
+        </div>
         <div className="legend">
           <span className="legend-icon planned"></span>
           Planned %
         </div>
         <div className="legend">
-          <span className="legend-icon actual"></span>
-          Actual %
+          <span className="legend-icon earned"></span>
+          Earned %
         </div>
       </div>
 
