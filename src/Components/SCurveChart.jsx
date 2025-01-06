@@ -3,15 +3,15 @@ import * as d3 from "d3";
 
 import "../Styles/SCurveChart.css";
 
-const SCurveChart = (props) => {
+const SCurveChart = ({ data }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const margin = { top: 20, right: 30, bottom: 30, left: 40 };
   const actualData =
-    props.data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
+    data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
   const plannedData =
-    props.data.filter((d) => d.projectType === "BASELINE_PROJECT") || [];
+    data.filter((d) => d.projectType === "BASELINE_PROJECT") || [];
 
   const transformData = (planned, actual, timeInterval) => {
     const plannedPoints = groupData(planned, timeInterval);
