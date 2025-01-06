@@ -71,7 +71,7 @@ const Gauge = ({ title, value, min, max }) => {
     .attr("x", 0)
     .attr("y", -(radius - arcWidth + 40))
     .attr("text-anchor", "middle")
-    .style("font-size", "24px")
+    .style("font-size", "16px")
     .style("fill", "#919392")
     .text(displayValue)
     .attr("transform", `rotate(${(needleAngle * 180) / Math.PI})`);
