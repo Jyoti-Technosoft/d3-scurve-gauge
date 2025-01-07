@@ -60,8 +60,7 @@ const styles = {
   },
 };
 
-const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
-  const svgRef = useRef();
+const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, plannedPointsColor = "steelblue", actualPointsColor = "red", actualLineColor = "yellow", plannedLineColor = "purple" }) => {  const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
@@ -295,7 +294,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .attr("class", "line planned")
       .attr("d", linePlanned)
       .attr("fill", "none")
-      .attr("stroke", "purple")
+      .attr("stroke", plannedLineColor)
       .attr("stroke-width", 4)
       .attr("stroke-dasharray", "10,10")
       .on("mouseenter", function () {
@@ -335,7 +334,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .attr("class", "line actual")
       .attr("d", lineActual)
       .attr("fill", "none")
-      .attr("stroke", "yellow")
+      .attr("stroke", actualLineColor)
       .attr("stroke-width", 4)
       .attr("stroke-dasharray", "10,10")
       .on("mouseenter", function () {
@@ -399,7 +398,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .attr("y", (d) => yScale(d.sumBaselinePlannedTotalCost))
       .attr("width", barWidth)
       .attr("height", (d) => yScale(0) - yScale(d.sumBaselinePlannedTotalCost)) // Calculate height from value
-      .attr("fill", "steelblue")
+      .attr("fill", plannedPointsColor)
       .attr("opacity", 0.7)
       .on("mouseenter", function (event, d) {
         tooltip
@@ -436,7 +435,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .attr("y", (d) => yScale(d.sumActualCost))
       .attr("width", barWidth)
       .attr("height", (d) => yScale(0) - yScale(d.sumActualCost)) // Calculate height from value
-      .attr("fill", "red")
+      .attr("fill", actualPointsColor)
       .attr("opacity", 0.7)
       .on("mouseenter", function (event, d) {
         tooltip

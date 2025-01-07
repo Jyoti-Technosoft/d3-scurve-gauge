@@ -60,7 +60,7 @@ const styles = {
   }
 };
 
-const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
+const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, plannedPointsColor = "#00ff00",  actualPointsColor= "#2F5233" }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
@@ -354,7 +354,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .attr("class", "line planned")
       .attr("d", linePlanned)
       .attr("fill", "none")
-      .attr("stroke", "#00FF00")
+      .attr("stroke", plannedPointsColor)
       .attr("stroke-width", 4);
 
     const lineActual = d3
@@ -367,7 +367,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .attr("class", "line actual")
       .attr("d", lineActual)
       .attr("fill", "none")
-      .attr("stroke", "#2F5233")
+      .attr("stroke", actualPointsColor)
       .attr("stroke-width", 4);
 
       if (actualPoints.length > 0) {
