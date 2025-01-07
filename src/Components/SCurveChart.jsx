@@ -5,7 +5,7 @@ import jsonData from "../Json/data.json";
 
 const styles = {
   scurveChartContainer: {
-    margin: "0px 20px 0px 70px",
+    margin: "0px 20px 20px 70px",
   },
   chartTitle: {
     fontSize: "24px",
@@ -26,7 +26,6 @@ const styles = {
     display: "flex",
     alignItems: "center",
     fontSize: "14px",
-    // color: "#333",
   },
   legendIcon: {
     width: "16px",
@@ -173,13 +172,6 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(d.value, 100))])
       .range([height, 0]);
 
-    // let timeFormat = "%d %b";
-    // if (timeInterval === "weekly") {
-    //   timeFormat = `Week %U, %Y`;
-    // } else if (timeInterval === "monthly") {
-    //   timeFormat = "%b %Y";
-    // }
-    // const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat(timeFormat));
     const xAxis = d3.axisBottom(xScale);
     let timeFormat = "%d %b";
     if (timeInterval === "weekly") {
@@ -234,9 +226,17 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom + 25)
+      .attr(
+        "y",
+        timeInterval === "weekly"
+          ? isMobile
+            ? height + margin.bottom + 40
+            : height + margin.bottom + 30
+          : height + margin.bottom + 25
+      )
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
+      .style("fill", isDarkMode ? "white" : "#121212")
       .text(xAxisTitle);
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);

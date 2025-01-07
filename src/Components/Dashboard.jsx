@@ -21,7 +21,7 @@ const Dashboard = ({ isDarkMode }) => {
   };
 
   return (
-    <div style={styles.dashboardContainer} className={`dashboard ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+    <div style={styles.dashboardContainer} className={`${isDarkMode ? "dark-mode" : "light-mode"}`}>
       <Gauge
         title="Schedule Percentage (%)"
         value={data.scheduledPercentage / 100}

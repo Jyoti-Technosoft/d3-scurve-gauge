@@ -2,9 +2,9 @@ import React from "react";
 
 import Dashboard from "./Components/Dashboard";
 import SCurveChart from "./Components/SCurveChart";
-import data from "./Constants/Data.json";
-import "./App.css";
 import GroupedBarChart from "./Components/GroupedBarChart";
+import data from "./Json/chartData.json";
+import "./App.css";
 
 function App() {
   const isDarkMode = false;
@@ -27,7 +27,6 @@ function App() {
         yAxisTitleLeft="Sum Cummulative Baseline Planned Total Cost"
         yAxisTitleRight="Cummulative Sum Actual Cost"
       />
-      {/* <SCurveHistogramChart data={data} /> */}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import * as d3 from "d3";
 
 const styles = {
   groupedBarContainer: {
-    margin: "0px 20px 20px 90px",
+    margin: "50px 20px 20px 90px",
   },
   chartTitle: {
     fontSize: "24px",
@@ -24,7 +24,6 @@ const styles = {
     display: "flex",
     alignItems: "center",
     fontSize: "14px",
-    // color: "#333",
   },
   legendIcon: {
     width: "16px",
@@ -168,7 +167,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
     const yScaleRight = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(
-        // d.value || 0,
         d.cumSumActualCost || 0,
         d.sumActualCost || 0,
         d.cumSumBaselinePlannedTotalCost || 0,
@@ -192,7 +190,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         }
         xAxis.tickFormat(d3.timeFormat(timeFormat));
     }
-    // const xAxis = d3.axisBottom(xScale).tickFormat(timeInterval === "weekly" ? timeFormat : d3.timeFormat(timeFormat));
     const yAxis = d3.axisLeft(yScale).tickFormat((d) => {
         if (d >= 1e9) {
           return `$${(d / 1e9).toFixed(2)}B`;
@@ -251,9 +248,17 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom + 40)
+      .attr(
+        "y",
+        timeInterval === "weekly"
+          ? isMobile
+            ? height + margin.bottom + 40
+            : height + margin.bottom + 20
+          : height + margin.bottom + 10
+      )
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
+      .style("fill", isDarkMode ? "white" : "#121212")
       .text(xAxisTitle);
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);
