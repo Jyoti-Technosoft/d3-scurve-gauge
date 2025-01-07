@@ -407,6 +407,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
           .style("visibility", "visible")
           .style("fill", variance > 0 ? "green" : "red");
       }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeInterval, dimensions, isDarkMode]);
 
   return (

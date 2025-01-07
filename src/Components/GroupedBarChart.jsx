@@ -103,7 +103,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         } else if (values.length > 0 && values[0].sumActualCost) {
           return {date: key, value: totalPlanned, ...values[0], startDate: key, sumActualCost: totalPlanned, cumSumActualCost: totalPlannedCumulative / values.length }
         }
-        // return { date: key, value: totalPlanned };
+        return { date: key, value: totalPlanned };
       });
     };
 
@@ -461,6 +461,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         tooltip.style("opacity", 0);
         tooltip.style("visibility", "hidden");
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeInterval, dimensions, isDarkMode]);
 
   return (
