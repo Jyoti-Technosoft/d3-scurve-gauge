@@ -1,5 +1,5 @@
 .grouped-bar-container {
-    margin: 0px 50px 0px 75px;
+    margin: 0px 20px 0px 90px;
 
     .chart-title {
         font-size: 24px;
@@ -34,10 +34,6 @@
         border-radius: 4px;
     } 
 	  
-    /* .legend-icon.budgeted {
-        background-color: #118dff;
-    } */
-
     .legend-icon.planned {
         background-color: steelblue;
         opacity: 0.7;
@@ -46,10 +42,6 @@
     .legend-icon.actual {
         background-color: red;
         opacity: 0.7;
-    }
-
-    .legend-icon.earned {
-        background-color: #6b007b;
     }
 
     .dropdown-container {
@@ -80,7 +72,7 @@
         font-weight: bold;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 800px) {
         .x-axis text {
             transform: rotate(-45deg);
             text-anchor: end;

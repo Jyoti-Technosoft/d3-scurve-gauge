@@ -36,3 +36,17 @@
     transform: rotate(360deg);
   }
 }
+
+.light-mode {
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+.dark-mode {
+  background-color: #121212;
+  color: #FFFFFF;
+}
+
+svg {
+  overflow: visible;
+}

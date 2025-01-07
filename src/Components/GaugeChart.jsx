@@ -1,7 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-import "../Styles/Gauge.css";
+const styles = {
+  gaugeContainer: {
+    textAlign: "center",
+    marginBottom: "20px",
+  },
+  gaugeTitle: {
+    fontSize: "16px",
+    fontWeight: "bold",
+  },
+};
 
 const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = false, colorLogic }) => {
   const svgRef = useRef();
@@ -11,7 +20,7 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
     const width = 220;
     const height = 220;
     const radius = Math.min(width, height) / 2 - 10;
-    const arcWidth = 30;
+    const arcWidth = 35;
     const svg = d3
       .select(svgRef.current)
       .attr("width", width)
@@ -112,7 +121,7 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
                 .style("font-size", "16px")
                 .style("fill", "#919392")
                 .style("writing-mode", "tb")
-                .text("0")
+                .text(min.toFixed(1))
                 .attr("transform", "rotate(-90) translate(-10,-5)");
             svg
                 .append("text")
@@ -122,7 +131,7 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
                 .style("font-size", "16px")
                 .style("fill", "#919392")
                 .style("writing-mode", "tb")
-                .text("2")
+                .text(max.toFixed(1))
                 .attr("transform", "rotate(-90) translate(-10,8)");
         }
 
@@ -194,7 +203,7 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
                 .style("font-size", "16px")
                 .style("fill", "#919392") 
                 .style("writing-mode", "tb")
-                .text("0")
+                .text(min.toFixed(1))
                 .attr("transform", "rotate(-90) translate(-10,-5)");
 
             svg
@@ -205,17 +214,18 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
                 .style("font-size", "16px")
                 .style("fill", "#919392") 
                 .style("writing-mode", "tb")
-                .text("2")
+                .text(max.toFixed(1))
                 .attr("transform", "rotate(-90) translate(-10,8)");
         }
     }
   }, [value, min, max, colorLogic, enableGradient, enableNeedle]);
 
   return (
-    <div className="gauge-container">
-      <h4 className="gauge-title">{title}</h4>
+    <div style={styles.gaugeContainer}>
+      <h4 style={styles.gaugeTitle}>{title}</h4>
       <svg ref={svgRef}></svg>
     </div>
   );
 };
+
 export default Gauge;

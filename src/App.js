@@ -7,8 +7,9 @@ import "./App.css";
 import GroupedBarChart from "./Components/GroupedBarChart";
 
 function App() {
+  const isDarkMode = true;
   return (
-    <div className="App">
+    <div className={`App ${isDarkMode ? "dark-mode" : "light-mode"}`}>
       <Dashboard />
       <SCurveChart 
         data={data}

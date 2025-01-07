@@ -2,7 +2,15 @@ import React from "react";
 
 import Gauge from "./GaugeChart";
 import data from "../Json/data.json";
-import "../Styles/Dashboard.css";
+
+const styles = {
+  dashboardContainer: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: "20px",
+    padding: "10px",
+  },
+};
 
 const Dashboard = () => {
   const colorLogic = {
@@ -13,7 +21,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard">
+    <div style={styles.dashboardContainer}>
       <Gauge
         title="Schedule Percentage (%)"
         value={data.scheduledPercentage / 100}

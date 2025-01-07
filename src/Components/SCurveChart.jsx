@@ -119,7 +119,8 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
         const weekNumberFormatter = (d) => {
             const weekNumber = d3.timeFormat("%U")(d); // Get the week number (starts from 0)
             const year = d3.timeFormat("%Y")(d); // Get the year
-            return `Week ${+weekNumber + 1}, ${year}`; // Increment by 1 to start from 1
+            const month = d3.timeFormat("%b")(d);
+            return `Week ${+weekNumber + 1},\n${month} ${year}`; // Increment by 1 to start from 1
         };
         xAxis.tickFormat(weekNumberFormatter);
     } else {
@@ -136,7 +137,26 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis);
-      svg
+    
+    if (timeInterval === "weekly") {
+        // Customize tick labels for multiline rendering
+        const customizeXAxisTicks = () => {
+          svg.selectAll(".x-axis text") // Select x-axis labels
+            .each(function () {
+              const text = d3.select(this);
+              const lines = text.text().split("\n"); // Split text into lines
+              text.text(null); // Clear existing text
+              lines.forEach((line, i) => {
+                text.append("tspan")
+                  .text(line) // Add each line
+                  .attr("x", 0)
+                  .attr("dy", i === 0 ? 8 : "1.2em"); // Offset subsequent lines
+              });
+            });
+        };
+        customizeXAxisTicks();
+    }
+    svg
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)

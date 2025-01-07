@@ -78,7 +78,16 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
 
     const xScale = d3
       .scaleTime()
-      .domain(d3.extent([...plannedPoints, ...actualPoints], (d) => d.date))
+      .domain([
+        d3.timeDay.offset(
+          d3.min([...plannedPoints, ...actualPoints], (d) => d.date),
+          -3
+        ),
+        d3.timeDay.offset(
+          d3.max([...plannedPoints, ...actualPoints], (d) => d.date),
+          3
+        ),
+      ])
       .range([0, width]);
     const yScale = d3
       .scaleLinear()
@@ -106,7 +115,8 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
         const weekNumberFormatter = (d) => {
             const weekNumber = d3.timeFormat("%U")(d); // Get the week number (starts from 0)
             const year = d3.timeFormat("%Y")(d); // Get the year
-            return `Week ${+weekNumber + 1}, ${year}`; // Increment by 1 to start from 1
+            const month = d3.timeFormat("%b")(d);
+            return `Week ${+weekNumber + 1},\n${month} ${year}`; // Increment by 1 to start from 1
         };
         xAxis.tickFormat(weekNumberFormatter);
     } else {
@@ -143,6 +153,26 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis);
+    
+    if (timeInterval === "weekly") {
+        // Customize tick labels for multiline rendering
+        const customizeXAxisTicks = () => {
+          svg.selectAll(".x-axis text") // Select x-axis labels
+            .each(function () {
+              const text = d3.select(this);
+              const lines = text.text().split("\n"); // Split text into lines
+              text.text(null); // Clear existing text
+              lines.forEach((line, i) => {
+                text.append("tspan")
+                  .text(line) // Add each line
+                  .attr("x", 0)
+                  .attr("dy", i === 0 ? 8 : "1.2em"); // Offset subsequent lines
+              });
+            });
+        };
+        customizeXAxisTicks();
+    }
+      
     svg
       .append("text")
       .attr("class", "x-axis-label")
@@ -156,7 +186,7 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
         .append("text")
         .attr("class", "y-axis1-label")
         .attr("x", -height / 2)
-        .attr("y", -margin.left)
+        .attr("y", -margin.left - 25)
         .attr("transform", "rotate(-90)")
         .attr("text-anchor", "middle")
         .text(yAxisTitleLeft);
@@ -171,78 +201,9 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("class", "y-axis2-label")
       .attr("x", width + margin.right - 10)
       .attr("y", height / 2)
-      .attr("transform", `rotate(90, ${width + margin.right + 10}, ${height / 2})`) // Rotate at the label position
+      .attr("transform", `rotate(90, ${width + margin.right + 30}, ${height / 2})`) // Rotate at the label position
       .attr("text-anchor", "middle")
       .text(yAxisTitleRight);
-
-    // const tooltip = svg
-    //   .append("text")
-    //   .attr("class", "tooltip")
-    //   .attr("x", 0)
-    //   .attr("y", 0)
-    //   .style("visibility", "hidden");
-
-    // const tooltipVariance = svg
-    //   .append("text")
-    //   .attr("class", "tooltip")
-    //   .attr("x", 0)
-    //   .attr("y", 0)
-    //   .style("visibility", "hidden");
-
-    // const line = svg
-    //   .append("line")
-    //   .attr("class", "vertical-line")
-    //   .attr("stroke", "red")
-    //   .attr("stroke-dasharray", "10,10")
-    //   .attr("stroke-width", "3px")
-    //   .style("visibility", "hidden");
-
-    // svg.on("mousemove", function (event) {
-    //   const [mouseX] = d3.pointer(event);
-    //   const xDate = xScale.invert(mouseX);
-    //   const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
-    //     return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
-    //       ? curr
-    //       : prev;
-    //   });
-    //   const closestActualPoint = actualPoints.reduce((prev, curr) => {
-    //     return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
-    //       ? curr
-    //       : prev;
-    //   });
-    //   const yValuePlanned = closestPlannedPoint
-    //     ? closestPlannedPoint.value
-    //     : null;
-    //   const yValueActual = closestActualPoint ? closestActualPoint.value : null;
-
-    //   tooltip
-    //     .attr("x", mouseX)
-    //     .attr("y", yScale(yValuePlanned || yValueActual))
-    //     .text(`Status Date: ${d3.timeFormat("%m/%d/%Y")(xDate)}`)
-    //     .style("visibility", "visible")
-    //     .style("fill", "red");
-
-    //   const variance =
-    //     calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
-    //   tooltipVariance
-    //     .attr("x", 50)
-    //     .attr("y", 50)
-    //     .text(`Variance: ${variance}%`)
-    //     .style("visibility", "visible")
-    //     .style("fill", variance > 0 ? "green" : "red");
-
-    //   line
-    //     .attr("x1", mouseX)
-    //     .attr("y1", margin.top)
-    //     .attr("x2", mouseX)
-    //     .attr("y2", height + margin.top)
-    //     .style("visibility", "visible");
-    // });
-
-    // svg.on("mouseout", function () {
-    //   tooltip.style("visibility", "hidden");
-    //   line.style("visibility", "hidden");
-    // });
 
     const linePlanned = d3
       .line()
@@ -256,7 +217,32 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("fill", "none")
       .attr("stroke", "purple")
       .attr("stroke-width", 4)
-      .attr("stroke-dasharray", "7,7"); // Add this for a dashed line
+      .attr("stroke-dasharray", "7,7")
+      .on("mouseenter", function () {
+        tooltip.style("opacity", 1).style("visibility", "visible");
+      })
+      .on("mousemove", function (event, d) {
+        const [mouseX] = d3.pointer(event);
+        const xDate = xScale.invert(mouseX);
+        const bisect = d3.bisector((d) => d.startDate).left;
+        const index = bisect(plannedPoints, xDate, 1);
+        const d0 = plannedPoints[index - 1];
+        const d1 = plannedPoints[index];
+        const point = xDate - d0.startDate > d1.startDate - xDate ? d1 : d0;
+
+        tooltip
+          .html(
+            `<div><strong>Planned:</strong> $${point.cumSumBaselinePlannedTotalCost.toLocaleString()}</div>
+             <div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+               point.startDate
+             )}</div>`
+          )
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`);
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0).style("visibility", "hidden");
+      });
 
     const lineActual = d3
       .line()
@@ -270,7 +256,33 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("fill", "none")
       .attr("stroke", "yellow")
       .attr("stroke-width", 4)
-      .attr("stroke-dasharray", "7,7"); // Add this for a dashed line
+      .attr("stroke-dasharray", "7,7")
+      .on("mouseenter", function () {
+        tooltip.style("opacity", 1).style("visibility", "visible");
+      })
+      .on("mousemove", function (event, d) {
+        const [mouseX] = d3.pointer(event);
+        const xDate = xScale.invert(mouseX);
+        const bisect = d3.bisector((d) => d.startDate).left;
+        const index = bisect(actualPoints, xDate, 1);
+        const d0 = actualPoints[index - 1];
+        const d1 = actualPoints[index];
+        const point = xDate - d0.startDate > d1.startDate - xDate ? d1 : d0;
+
+        tooltip
+          .html(
+            `<div><strong>Actual:</strong> $${point.cumSumActualCost.toLocaleString()}</div>
+             <div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+               point.startDate
+             )}</div>`
+          )
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`);
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0).style("visibility", "hidden");
+      });
+
     // Bar width for the chart
     let barWidth = 5;
     if (timeInterval === "weekly") {
@@ -279,33 +291,89 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
         barWidth = 15;
     }
 
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("visibility", "hidden")
+      .style("background-color", "white")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "4px")
+      .style("font-size", "14px")
+      .style("padding", "10px")
+      .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
+
     // Planned Bars
     svg
-        .selectAll(".bar.planned")
-        .data(plannedPoints)
-        .enter()
-        .append("rect")
-        .attr("class", "bar planned")
-        .attr("x", (d) => xScale(d.startDate) - barWidth / 2) // Centering the bar
-        .attr("y", (d) => yScale(d.sumBaselinePlannedTotalCost))
-        .attr("width", barWidth)
-        .attr("height", (d) => yScale(0) - yScale(d.sumBaselinePlannedTotalCost)) // Calculate height from value
-        .attr("fill", "steelblue")
-        .attr("opacity", 0.7);
-
+      .selectAll(".bar.planned")
+      .data(plannedPoints)
+      .enter()
+      .append("rect")
+      .attr("class", "bar planned")
+      .attr("x", (d) => xScale(d.startDate) - barWidth / 2) // Centering the bar
+      .attr("y", (d) => yScale(d.sumBaselinePlannedTotalCost))
+      .attr("width", barWidth)
+      .attr("height", (d) => yScale(0) - yScale(d.sumBaselinePlannedTotalCost)) // Calculate height from value
+      .attr("fill", "steelblue")
+      .attr("opacity", 0.7)
+      .on("mouseenter", function (event, d) {
+        tooltip
+          .style("opacity", 1)
+          .style("pointer-events", "none");
+      })
+      .on("mousemove", function (event, d) {
+        const [x, y] = d3.pointer(event);
+        tooltip
+          .html(
+            `<div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+              d.startDate
+            )}</div>
+               <div><strong>Planned Cost:</strong> $${d.sumBaselinePlannedTotalCost.toLocaleString()}</div>`
+          )
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`) 
+          .style("visibility", "visible");
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0).style("visibility", "hidden");
+      });
+      
     // Actual Bars
     svg
-        .selectAll(".bar.actual")
-        .data(actualPoints)
-        .enter()
-        .append("rect")
-        .attr("class", "bar actual")
-        .attr("x", (d) => xScale(d.startDate) + barWidth / 2) // Offset to the right
-        .attr("y", (d) => yScale(d.sumActualCost))
-        .attr("width", barWidth)
-        .attr("height", (d) => yScale(0) - yScale(d.sumActualCost)) // Calculate height from value
-        .attr("fill", "red")
-        .attr("opacity", 0.7);
+      .selectAll(".bar.actual")
+      .data(actualPoints)
+      .enter()
+      .append("rect")
+      .attr("class", "bar actual")
+      .attr("x", (d) => xScale(d.startDate) + barWidth / 2) // Offset to the right
+      .attr("y", (d) => yScale(d.sumActualCost))
+      .attr("width", barWidth)
+      .attr("height", (d) => yScale(0) - yScale(d.sumActualCost)) // Calculate height from value
+      .attr("fill", "red")
+      .attr("opacity", 0.7)
+      .on("mouseenter", function (event, d) {
+        tooltip
+          .style("opacity", 1)
+          .style("pointer-events", "none");
+      })
+      .on("mousemove", function (event, d) {
+        const [x, y] = d3.pointer(event);
+        tooltip
+          .html(
+            `<div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+              d.startDate
+            )}</div>
+               <div><strong>Actual Cost:</strong> $${d.sumActualCost.toLocaleString()}</div>`
+          )
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY + 10}px`) 
+          .style("visibility", "visible");
+      })
+      .on("mouseleave", function () {
+        tooltip.style("opacity", 0);
+        tooltip.style("visibility", "hidden");
+      });
   }, [timeInterval, dimensions]);
 
   return (
@@ -314,21 +382,13 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
 
       <div className="legend-filter">
       <div className="legends">
-        {/* <div className="legend">
-          <span className="legend-icon budgeted"></span>
-          Budgeted %
-        </div> */}
         <div className="legend">
           <span className="legend-icon actual"></span>
-          Actual %
+          Actual $
         </div>
         <div className="legend">
           <span className="legend-icon planned"></span>
-          Planned %
-        </div>
-        <div className="legend">
-          <span className="legend-icon earned"></span>
-          Earned %
+          Planned $
         </div>
       </div>
 
