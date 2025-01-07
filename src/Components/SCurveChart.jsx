@@ -2,12 +2,71 @@ import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 import jsonData from "../Json/data.json";
-import "../Styles/SCurveChart.css";
 
-const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
+const styles = {
+  scurveChartContainer: {
+    margin: "0px 20px 0px 70px",
+  },
+  chartTitle: {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginBottom: "10px",
+  },
+  legendFilter: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  legends: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+    marginBottom: "20px",
+  },
+  legend: {
+    display: "flex",
+    alignItems: "center",
+    fontSize: "14px",
+    // color: "#333",
+  },
+  legendIcon: {
+    width: "16px",
+    height: "16px",
+    marginRight: "5px",
+    display: "inline-block",
+    borderRadius: "4px",
+  },
+  legendIconPlanned: {
+    backgroundColor: "#00ff00",
+  },
+  legendIconActual: {
+    backgroundColor: "#2F5233",
+  },
+  dropdownContainer: {
+    margin: "20px 0",
+    textAlign: "center",
+  },
+  dropdown: {
+    width: "200px",
+    padding: "10px",
+    fontSize: "16px",
+    cursor: "pointer",
+    borderRadius: "5px",
+    outline: "none",
+    transition: "all 0.3s ease",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  dropdownOption: {
+    padding: "10px"
+  }
+};
+
+const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef(null);
+
   const actualData =
     data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
   const plannedData =
@@ -65,10 +124,12 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
   }
 
   const updateDimensions = () => {
-    const containerWidth = document.querySelector(
-      ".scurve-chart-container"
-    ).clientWidth;
+    const containerWidth = containerRef.current.clientWidth;
     setDimensions({ width: containerWidth, height: 500 });
+  };
+
+  const handleResize = () => {
+    setIsMobile(window.innerWidth <= 800);
   };
 
   useEffect(() => {
@@ -77,6 +138,12 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
     return () => {
       window.removeEventListener("resize", updateDimensions);
     };
+  }, []);
+  
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -137,6 +204,13 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis);
+
+    if (isMobile) {
+      svg.selectAll(".x-axis text")
+        .style("transform", "rotate(-45deg)")
+        .style("text-anchor", "end")
+        .style("dominant-baseline", "hanging");
+    }
     
     if (timeInterval === "weekly") {
         // Customize tick labels for multiline rendering
@@ -160,8 +234,9 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom + 10)
+      .attr("y", height + margin.bottom + 25)
       .attr("text-anchor", "middle")
+      .style("font-weight", "bold")
       .text(xAxisTitle);
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);
@@ -172,6 +247,8 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
     .attr("y", -margin.left)
     .attr("transform", "rotate(-90)")
     .attr("text-anchor", "middle")
+    .style("font-weight", "bold")
+    .style("fill", isDarkMode ? "white" : "#121212")
     .text(yAxisTitleLeft);
 
     svg
@@ -186,6 +263,8 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .attr("y", height / 2)
       .attr("transform", `rotate(90, ${width + margin.right + 10}, ${height / 2})`) // Rotate at the label position
       .attr("text-anchor", "middle")
+      .style("font-weight", "bold")
+      .style("fill", isDarkMode ? "white" : "#121212")
       .text(yAxisTitleRight);
 
     d3.selectAll(".tooltip").remove();
@@ -199,6 +278,7 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       .style("border-radius", "4px")
       .style("font-size", "14px")
       .style("padding", "10px")
+      .style("display", "none")
       .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
 
     const tooltipVariance = svg
@@ -229,6 +309,7 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
         `)
         .style("left", `${mouseX + 10}px`) // Offset slightly to the right
         .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
+        .style("display", "block")
         .style("visibility", "visible");
       const variance =
         calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
@@ -326,41 +407,37 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
           .style("visibility", "visible")
           .style("fill", variance > 0 ? "green" : "red");
       }
-  }, [timeInterval, dimensions]);
+  }, [timeInterval, dimensions, isDarkMode]);
 
   return (
-    <div className="scurve-chart-container">
-      <h2 className="chart-title">{chartTitle}</h2>
-
-    <div className="legend-filter">
-      <div className="legends">
-        <div className="legend">
-          <span className="legend-icon planned"></span>
-          Planned %
+    <div className={`wrapper ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div style={styles.scurveChartContainer} ref={containerRef}>
+        <h3 style={styles.chartTitle}>{chartTitle}</h3>
+        <div style={styles.legendFilter}>
+          <div style={styles.legends}>
+            <div style={styles.legend}>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }}></span>
+              Planned %
+            </div>
+            <div style={styles.legend}>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconActual }}></span>
+              Actual %
+            </div>
+          </div>
+          <div style={styles.dropdownContainer}>
+            <select
+              value={timeInterval}
+              onChange={(e) => setTimeInterval(e.target.value)}
+              style={styles.dropdown}
+            >
+              <option style={styles.dropdownOption} value="daily">Daily</option>
+              <option style={styles.dropdownOption} value="weekly">Weekly</option>
+              <option style={styles.dropdownOption} value="monthly">Monthly</option>
+            </select>
+          </div>
         </div>
-        <div className="legend">
-          <span className="legend-icon actual"></span>
-          Actual %
-        </div>
+        <svg ref={svgRef} width={dimensions.width} height={dimensions.height} ></svg>
       </div>
-
-      <div className="dropdown-container">
-        <select
-          className="dropdown"
-          value={timeInterval}
-          onChange={(e) => setTimeInterval(e.target.value)}
-        >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-      </div>
-    </div>
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-      ></svg>
     </div>
   );
 };

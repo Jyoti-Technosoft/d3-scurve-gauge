@@ -1,12 +1,72 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import "../Styles/GroupedBarChart.css";
+const styles = {
+  groupedBarContainer: {
+    margin: "0px 20px 20px 90px",
+  },
+  chartTitle: {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginBottom: "10px",
+  },
+  legendFilter: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  legends: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+    marginBottom: "20px",
+  },
+  legend: {
+    display: "flex",
+    alignItems: "center",
+    fontSize: "14px",
+    // color: "#333",
+  },
+  legendIcon: {
+    width: "16px",
+    height: "16px",
+    marginRight: "5px",
+    display: "inline-block",
+    borderRadius: "4px",
+  },
+  legendIconPlanned: {
+    backgroundColor: "steelblue",
+    opacity: "0.7",
+  },
+  legendIconActual: {
+    backgroundColor: "red",
+    opacity: "0.7",
+  },
+  dropdownContainer: {
+    margin: "20px 0",
+    textAlign: "center",
+  },
+  dropdown: {
+    width: "200px",
+    padding: "10px",
+    fontSize: "16px",
+    cursor: "pointer",
+    borderRadius: "5px",
+    outline: "none",
+    transition: "all 0.3s ease",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  dropdownOption: {
+    padding: "10px"
+  },
+};
 
-const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
+const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef(null);
+  
   const margin = { top: 20, right: 30, bottom: 30, left: 40 };
   const actualData =
     data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
@@ -49,11 +109,19 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
     };
 
   const updateDimensions = () => {
-    const containerWidth = document.querySelector(
-      ".grouped-bar-container"
-    ).clientWidth;
+    const containerWidth = containerRef.current.clientWidth;
     setDimensions({ width: containerWidth, height: 500 });
   };
+
+  const handleResize = () => {
+    setIsMobile(window.innerWidth <= 800);
+  };
+
+  useEffect(() => {
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     updateDimensions();
@@ -153,6 +221,13 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("class", "x-axis")
       .attr("transform", `translate(0, ${height})`)
       .call(xAxis);
+
+    if (isMobile) {
+      svg.selectAll(".x-axis text")
+        .style("transform", "rotate(-45deg)")
+        .style("text-anchor", "end")
+        .style("dominant-baseline", "hanging");
+    }
     
     if (timeInterval === "weekly") {
         // Customize tick labels for multiline rendering
@@ -177,8 +252,9 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
-      .attr("y", height + margin.bottom + 10)
+      .attr("y", height + margin.bottom + 40)
       .attr("text-anchor", "middle")
+      .style("font-weight", "bold")
       .text(xAxisTitle);
 
     svg.append("g").attr("class", "y-axis1").call(yAxis);
@@ -189,6 +265,8 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
         .attr("y", -margin.left - 25)
         .attr("transform", "rotate(-90)")
         .attr("text-anchor", "middle")
+        .style("font-weight", "bold")
+        .style("fill", isDarkMode ? "white" : "#121212")
         .text(yAxisTitleLeft);
 
     svg
@@ -203,6 +281,8 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("y", height / 2)
       .attr("transform", `rotate(90, ${width + margin.right + 30}, ${height / 2})`) // Rotate at the label position
       .attr("text-anchor", "middle")
+      .style("font-weight", "bold")
+      .style("fill", isDarkMode ? "white" : "#121212")
       .text(yAxisTitleRight);
 
     const linePlanned = d3
@@ -217,9 +297,9 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("fill", "none")
       .attr("stroke", "purple")
       .attr("stroke-width", 4)
-      .attr("stroke-dasharray", "7,7")
+      .attr("stroke-dasharray", "10,10")
       .on("mouseenter", function () {
-        tooltip.style("opacity", 1).style("visibility", "visible");
+        tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
       })
       .on("mousemove", function (event, d) {
         const [mouseX] = d3.pointer(event);
@@ -232,12 +312,13 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
 
         tooltip
           .html(
-            `<div><strong>Planned:</strong> $${point.cumSumBaselinePlannedTotalCost.toLocaleString()}</div>
-             <div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Planned:</strong> $${point.cumSumBaselinePlannedTotalCost.toFixed(2)}<br />
+             <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
-             )}</div>`
+             )}`
           )
-          .style("left", `${event.pageX + 10}px`)
+          .style("display", "block")
+          .style("left", `${mouseX + 10}px`)
           .style("top", `${event.pageY + 10}px`);
       })
       .on("mouseleave", function () {
@@ -256,9 +337,9 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .attr("fill", "none")
       .attr("stroke", "yellow")
       .attr("stroke-width", 4)
-      .attr("stroke-dasharray", "7,7")
+      .attr("stroke-dasharray", "10,10")
       .on("mouseenter", function () {
-        tooltip.style("opacity", 1).style("visibility", "visible");
+        tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
       })
       .on("mousemove", function (event, d) {
         const [mouseX] = d3.pointer(event);
@@ -271,12 +352,13 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
 
         tooltip
           .html(
-            `<div><strong>Actual:</strong> $${point.cumSumActualCost.toLocaleString()}</div>
-             <div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Actual:</strong> $${point.cumSumActualCost.toFixed(2)}<br />
+             <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
-             )}</div>`
+             )}`
           )
-          .style("left", `${event.pageX + 10}px`)
+          .style("display", "block")
+          .style("left", `${mouseX + 10}px`)
           .style("top", `${event.pageY + 10}px`);
       })
       .on("mouseleave", function () {
@@ -291,10 +373,11 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
         barWidth = 15;
     }
 
+    d3.selectAll(".tooltip1").remove();
     const tooltip = d3
       .select("body")
       .append("div")
-      .attr("class", "tooltip")
+      .attr("class", "tooltip1")
       .style("position", "absolute")
       .style("visibility", "hidden")
       .style("background-color", "white")
@@ -302,6 +385,7 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .style("border-radius", "4px")
       .style("font-size", "14px")
       .style("padding", "10px")
+      .style("display", "none")
       .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
 
     // Planned Bars
@@ -320,18 +404,20 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .on("mouseenter", function (event, d) {
         tooltip
           .style("opacity", 1)
+          .style("display", "block")
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        const [x, y] = d3.pointer(event);
+        const [mouseX] = d3.pointer(event);
         tooltip
           .html(
-            `<div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
               d.startDate
-            )}</div>
-               <div><strong>Planned Cost:</strong> $${d.sumBaselinePlannedTotalCost.toLocaleString()}</div>`
+            )}<br />
+            <strong>Planned Cost:</strong> $${d.sumBaselinePlannedTotalCost.toFixed(2)}`
           )
-          .style("left", `${event.pageX + 10}px`)
+          .style("display", "block")
+          .style("left", `${mouseX + 10}px`)
           .style("top", `${event.pageY + 10}px`) 
           .style("visibility", "visible");
       })
@@ -355,60 +441,68 @@ const GroupedBarChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTi
       .on("mouseenter", function (event, d) {
         tooltip
           .style("opacity", 1)
+          .style("display", "block")
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        const [x, y] = d3.pointer(event);
+        const [mouseX] = d3.pointer(event);
         tooltip
           .html(
-            `<div><strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
               d.startDate
-            )}</div>
-               <div><strong>Actual Cost:</strong> $${d.sumActualCost.toLocaleString()}</div>`
+            )}<br />
+            <strong>Actual Cost:</strong> $${d.sumActualCost.toFixed(2)}`
           )
-          .style("left", `${event.pageX + 10}px`)
+          .style("left", `${mouseX + 10}px`)
           .style("top", `${event.pageY + 10}px`) 
+          .style("display", "block")
           .style("visibility", "visible");
       })
       .on("mouseleave", function () {
         tooltip.style("opacity", 0);
         tooltip.style("visibility", "hidden");
       });
-  }, [timeInterval, dimensions]);
+  }, [timeInterval, dimensions, isDarkMode]);
 
   return (
-    <div className="grouped-bar-container">
-      <h2 className="chart-title">{chartTitle}</h2>
-
-      <div className="legend-filter">
-      <div className="legends">
-        <div className="legend">
-          <span className="legend-icon actual"></span>
-          Actual $
+    <div className={`wrapper ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      <div style={styles.groupedBarContainer} ref={containerRef}>
+        <h3 style={styles.chartTitle}>{chartTitle}</h3>
+        <div style={styles.legendFilter}>
+          <div style={styles.legends}>
+            <div style={styles.legend}>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }} ></span>
+              Planned $
+            </div>
+            <div style={styles.legend}>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconActual }} ></span>
+              Actual $
+            </div>
+          </div>
+          <div style={styles.dropdownContainer}>
+            <select
+              value={timeInterval}
+              onChange={(e) => setTimeInterval(e.target.value)}
+              style={styles.dropdown}
+            >
+              <option style={styles.dropdownOption} value="daily">
+                Daily
+              </option>
+              <option style={styles.dropdownOption} value="weekly">
+                Weekly
+              </option>
+              <option style={styles.dropdownOption} value="monthly">
+                Monthly
+              </option>
+            </select>
+          </div>
         </div>
-        <div className="legend">
-          <span className="legend-icon planned"></span>
-          Planned $
-        </div>
+        <svg
+          ref={svgRef}
+          width={dimensions.width}
+          height={dimensions.height}
+        ></svg>
       </div>
-
-      <div className="dropdown-container">
-        <select
-          className="dropdown"
-          value={timeInterval}
-          onChange={(e) => setTimeInterval(e.target.value)}
-        >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-      </div>
-    </div>
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-      ></svg>
     </div>
   );
 };

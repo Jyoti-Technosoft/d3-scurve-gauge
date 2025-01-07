@@ -7,11 +7,12 @@ import "./App.css";
 import GroupedBarChart from "./Components/GroupedBarChart";
 
 function App() {
-  const isDarkMode = true;
+  const isDarkMode = false;
   return (
     <div className={`App ${isDarkMode ? "dark-mode" : "light-mode"}`}>
-      <Dashboard />
+      <Dashboard isDarkMode={isDarkMode} />
       <SCurveChart 
+        isDarkMode={isDarkMode}
         data={data}
         chartTitle="S-Curve"
         xAxisTitle="Start Date"
@@ -19,6 +20,7 @@ function App() {
         yAxisTitleRight="Physical Progress (%)"
       />
       <GroupedBarChart
+        isDarkMode={isDarkMode}
         data={data}
         chartTitle="Cost Performance Summary"
         xAxisTitle="Start Date"
