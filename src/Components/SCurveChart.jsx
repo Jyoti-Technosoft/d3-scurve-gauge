@@ -8,7 +8,6 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
-  const margin = { top: 20, right: 30, bottom: 30, left: 40 };
   const actualData =
     data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
   const plannedData =
@@ -87,6 +86,7 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
       timeInterval
     );
 
+    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
@@ -271,10 +271,8 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
 
       if (actualPoints.length > 0) {
         const lastPoint = actualPoints[actualPoints.length - 1];
-        const xPos = xScale(new Date(jsonData.statusDate));
-        const xDate = xScale.invert(xPos);
-        const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
-        const yPos = yValueActual ? yScale(yValueActual)  : yScale(lastPoint.value);
+        const xPos = xScale(lastPoint.date);
+        const yPos = yScale(lastPoint.value);
     
         svg
           .append("text")
@@ -297,6 +295,8 @@ const SCurveChart = ({ data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleR
           .attr("stroke-width", "3px")
           .style("visibility", "visible");
 
+        const xDate = xScale.invert(xPos);
+        const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
         const variance =
           calculateVariance(yValuePlanned, yValueActual).toFixed(2) || 0;
         tooltipVariance
