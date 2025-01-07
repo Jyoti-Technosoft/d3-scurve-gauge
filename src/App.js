@@ -4,13 +4,14 @@ import Dashboard from "./Components/Dashboard";
 import SCurveChart from "./Components/SCurveChart";
 import GroupedBarChart from "./Components/GroupedBarChart";
 import data from "./Json/spread-period.json";
+import projectInfoData from "./Json/project-info.json";
 import "./App.css";
 
 function App() {
   const isDarkMode = false;
   return (
     <div className={`App ${isDarkMode ? "dark-mode" : "light-mode"}`}>
-      <Dashboard isDarkMode={isDarkMode} />
+      <Dashboard isDarkMode={isDarkMode} projectInfoData={projectInfoData}/>
       <SCurveChart 
         isDarkMode={isDarkMode}
         data={data}
@@ -18,6 +19,7 @@ function App() {
         xAxisTitle="Start Date"
         yAxisTitleLeft="Baseline Planned Total Cost (%)"
         yAxisTitleRight="Physical Progress (%)"
+        projectInfoData={projectInfoData}
       />
       <GroupedBarChart
         isDarkMode={isDarkMode}

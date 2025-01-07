@@ -1,7 +1,6 @@
 import React from "react";
 
 import Gauge from "./GaugeChart";
-import data from "../Json/project-info.json";
 
 const styles = {
   dashboardContainer: {
@@ -12,11 +11,11 @@ const styles = {
   },
 };
 
-const Dashboard = ({ isDarkMode }) => {
+const Dashboard = ({ isDarkMode, projectInfoData }) => {
   const colorLogic = {
     schedule: () => "#2596be",
     actual: (value) =>
-      value > data.scheduledPercentage / 100 ? "#28a745" : "#f40400",
+      value > projectInfoData.scheduledPercentage / 100 ? "#28a745" : "#f40400",
     index: (value) => (value >= 1 ? "#28a745" : "#f40400"),
   };
 
@@ -24,28 +23,28 @@ const Dashboard = ({ isDarkMode }) => {
     <div style={styles.dashboardContainer} className={`${isDarkMode ? "dark-mode" : "light-mode"}`}>
       <Gauge
         title="Schedule Percentage (%)"
-        value={data.scheduledPercentage / 100}
+        value={projectInfoData.scheduledPercentage / 100}
         min={0}
         max={1}
         colorLogic={colorLogic.schedule}
       />
       <Gauge
         title="Actual Percentage (%)"
-        value={data.actualPercentage / 100}
+        value={projectInfoData.actualPercentage / 100}
         min={0}
         max={1}
         colorLogic={colorLogic.actual}
       />
       <Gauge
         title="Schedule Performance Index (SPI)"
-        value={data.spi}
+        value={projectInfoData.spi}
         min={0}
         max={2}
         colorLogic={colorLogic.index}
       />
       <Gauge
         title="Cost Performance Index (CPI)"
-        value={data.cpi}
+        value={projectInfoData.cpi}
         min={0}
         max={2}
         colorLogic={colorLogic.index}

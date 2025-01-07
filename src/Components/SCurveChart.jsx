@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import jsonData from "../Json/project-info.json";
-
 const styles = {
   scurveChartContainer: {
     margin: "0px 20px 0px 70px",
@@ -60,7 +58,7 @@ const styles = {
   }
 };
 
-const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, plannedPointsColor = "#00ff00",  actualPointsColor= "#2F5233" }) => {
+const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, projectInfoData, plannedPointsColor = "#00ff00",  actualPointsColor= "#2F5233" }) => {
   const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
@@ -332,7 +330,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
     svg.on("mouseout", function () {
       tooltip.style("visibility", "hidden");
       line.style("visibility", "hidden");
-      const xPos = xScale(new Date(jsonData.statusDate));
+      const xPos = xScale(new Date(projectInfoData.statusDate));
       const xDate = xScale.invert(xPos);
       const { yValueActual, yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
       const variance =
@@ -381,7 +379,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
           .attr("class", "fix-tooltip")
           .attr("x", xPos + 10)
           .attr("y", yPos - 10)
-          .text(`Status Date: ${jsonData.statusDate}`)
+          .text(`Status Date: ${projectInfoData.statusDate}`)
           .style("fill", "red")
           .style("visibility", "visible");
     
