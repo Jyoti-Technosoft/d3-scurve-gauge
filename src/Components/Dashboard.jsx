@@ -1,7 +1,7 @@
 import React from "react";
 
 import Gauge from "./GaugeChart";
-import data from "../Json/data.json";
+import data from "../Json/project-info.json";
 
 const styles = {
   dashboardContainer: {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-import jsonData from "../Json/data.json";
+import jsonData from "../Json/project-info.json";
 
 const styles = {
   scurveChartContainer: {

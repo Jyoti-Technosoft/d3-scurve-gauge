@@ -3,7 +3,7 @@ import React from "react";
 import Dashboard from "./Components/Dashboard";
 import SCurveChart from "./Components/SCurveChart";
 import GroupedBarChart from "./Components/GroupedBarChart";
-import data from "./Json/chartData.json";
+import data from "./Json/spread-period.json";
 import "./App.css";
 
 function App() {
