@@ -20,7 +20,7 @@ const Gauge = ({ title, value, min, max, enableNeedle = false, enableGradient = 
     const width = 220;
     const height = 220;
     const radius = Math.min(width, height) / 2 - 10;
-    const arcWidth = 35;
+    const arcWidth = 40;
     const svg = d3
       .select(svgRef.current)
       .attr("width", width)
