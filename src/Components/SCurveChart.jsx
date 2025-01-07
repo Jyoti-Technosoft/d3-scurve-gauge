@@ -5,7 +5,8 @@ import jsonData from "../Json/data.json";
 
 const styles = {
   scurveChartContainer: {
-    margin: "0px 20px 20px 70px",
+    margin: "0px 20px 0px 70px",
+    height: "100vh"
   },
   chartTitle: {
     fontSize: "24px",
@@ -231,7 +232,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
         timeInterval === "weekly"
           ? isMobile
             ? height + margin.bottom + 40
-            : height + margin.bottom + 30
+            : height + margin.bottom + 20
           : height + margin.bottom + 25
       )
       .attr("text-anchor", "middle")

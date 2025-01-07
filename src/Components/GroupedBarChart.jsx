@@ -3,7 +3,8 @@ import * as d3 from "d3";
 
 const styles = {
   groupedBarContainer: {
-    margin: "50px 20px 20px 90px",
+    margin: "0px 20px 0px 90px",
+    height: "100vh",
   },
   chartTitle: {
     fontSize: "24px",
@@ -254,7 +255,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           ? isMobile
             ? height + margin.bottom + 40
             : height + margin.bottom + 20
-          : height + margin.bottom + 10
+          : height + margin.bottom + 25
       )
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
