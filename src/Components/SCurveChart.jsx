@@ -3,8 +3,8 @@ import * as d3 from "d3";
 
 const styles = {
   scurveChartContainer: {
-    margin: "0px 20px 0px 70px",
-    height: "100vh"
+    margin: "auto",
+    width: "90%",
   },
   chartTitle: {
     fontSize: "24px",
@@ -152,11 +152,17 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
     );
 
     const margin = { top: 20, right: 30, bottom: 30, left: 40 };
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
     const width = dimensions.width - margin.left - margin.right;
     const height = dimensions.height - margin.top - margin.bottom;
+
+    d3.select(containerRef.current).select("svg").remove();
+    const svg = d3
+      .select(containerRef.current)
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const xScale = d3
       .scaleTime()

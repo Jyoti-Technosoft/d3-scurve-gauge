@@ -3,13 +3,14 @@ import * as d3 from "d3";
 
 const styles = {
   groupedBarContainer: {
-    margin: "0px 20px 0px 90px",
-    height: "100vh",
+    margin: "auto",
+    width: "90%",
+    paddingBottom: "5rem"
   },
   chartTitle: {
     fontSize: "24px",
     fontWeight: "bold",
-    marginBottom: "10px",
+    marginTop: "5rem",
   },
   legendFilter: {
     display: "flex",
@@ -138,11 +139,17 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       timeInterval
     );
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-
     const width = dimensions.width - margin.left - margin.right;
     const height = dimensions.height - margin.top - margin.bottom;
+  
+    d3.select(containerRef.current).select("svg").remove();
+    const svg = d3
+      .select(containerRef.current)
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const xScale = d3
       .scaleTime()
