@@ -60,7 +60,8 @@ const styles = {
   },
 };
 
-const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, plannedPointsColor = "steelblue", actualPointsColor = "red", actualLineColor = "yellow", plannedLineColor = "purple" }) => {  const svgRef = useRef();
+const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, currencySymbol, plannedPointsColor = "steelblue", actualPointsColor = "red", actualLineColor = "yellow", plannedLineColor = "purple" }) => {
+  const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
@@ -193,24 +194,24 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
     }
     const yAxis = d3.axisLeft(yScale).tickFormat((d) => {
         if (d >= 1e9) {
-          return `$${(d / 1e9).toFixed(2)}B`;
+          return `${currencySymbol}${(d / 1e9).toFixed(2)}B`;
         } else if (d >= 1e6) {
-          return `$${(d / 1e6).toFixed(2)}M`;
+          return `${currencySymbol}${(d / 1e6).toFixed(2)}M`;
         } else if (d >= 1e3) {
-          return `$${(d / 1e3).toFixed(2)}K`;
+          return `${currencySymbol}${(d / 1e3).toFixed(2)}K`;
         } else {
-          return `$${d}`;
+          return `${currencySymbol}${d}`;
         }
       });
     const yAxisRight = d3.axisRight(yScaleRight).tickFormat((d) => {
         if (d >= 1e9) {
-          return `$${(d / 1e9).toFixed(2)}B`;
+          return `${currencySymbol}${(d / 1e9).toFixed(2)}B`;
         } else if (d >= 1e6) {
-          return `$${(d / 1e6).toFixed(2)}M`;
+          return `${currencySymbol}${(d / 1e6).toFixed(2)}M`;
         } else if (d >= 1e3) {
-          return `$${(d / 1e3).toFixed(2)}K`;
+          return `${currencySymbol}${(d / 1e3).toFixed(2)}K`;
         } else {
-          return `$${d}`;
+          return `${currencySymbol}${d}`;
         }
       });
     svg
@@ -317,7 +318,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Planned:</strong> $${point.cumSumBaselinePlannedTotalCost.toFixed(2)}<br />
+            `<strong>Planned:</strong> ${currencySymbol}${point.cumSumBaselinePlannedTotalCost.toFixed(2)}<br />
              <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
              )}`
@@ -357,7 +358,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Actual:</strong> $${point.cumSumActualCost.toFixed(2)}<br />
+            `<strong>Actual:</strong> ${currencySymbol}${point.cumSumActualCost.toFixed(2)}<br />
              <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
              )}`
@@ -419,7 +420,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
               d.startDate
             )}<br />
-            <strong>Planned Cost:</strong> $${d.sumBaselinePlannedTotalCost.toFixed(2)}`
+            <strong>Planned Cost:</strong> ${currencySymbol}${d.sumBaselinePlannedTotalCost.toFixed(2)}`
           )
           .style("display", "block")
           .style("left", `${mouseX + 10}px`)
@@ -456,7 +457,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
               d.startDate
             )}<br />
-            <strong>Actual Cost:</strong> $${d.sumActualCost.toFixed(2)}`
+            <strong>Actual Cost:</strong> ${currencySymbol}${d.sumActualCost.toFixed(2)}`
           )
           .style("left", `${mouseX + 10}px`)
           .style("top", `${event.pageY + 10}px`) 
@@ -478,11 +479,11 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           <div style={styles.legends}>
             <div style={styles.legend}>
               <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }} ></span>
-              Planned $
+              Planned {currencySymbol}
             </div>
             <div style={styles.legend}>
               <span style={{ ...styles.legendIcon, ...styles.legendIconActual }} ></span>
-              Actual $
+              Actual {currencySymbol}
             </div>
           </div>
           <div style={styles.dropdownContainer}>

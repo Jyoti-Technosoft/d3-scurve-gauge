@@ -17,7 +17,7 @@ function App() {
         data={data}
         chartTitle="S-Curve"
         xAxisTitle="Start Date"
-        yAxisTitleLeft="Baseline Planned Total Cost (%)"
+        yAxisTitleLeft="Baseline Planned (%)"
         yAxisTitleRight="Physical Progress (%)"
         projectInfoData={projectInfoData}
       />
@@ -28,6 +28,7 @@ function App() {
         xAxisTitle="Start Date"
         yAxisTitleLeft="Sum Cummulative Baseline Planned Total Cost"
         yAxisTitleRight="Cummulative Sum Actual Cost"
+        currencySymbol="$" // Pass currency symbols from here ₹,..
       />
     </div>
   );

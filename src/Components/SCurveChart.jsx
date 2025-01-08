@@ -303,8 +303,8 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       tooltip
         .html(`
           <strong>Status Date:</strong> ${d3.timeFormat("%m/%d/%Y")(xDate)}<br>
-          <strong>Planned Cost (%):</strong> ${yValuePlanned.toFixed(2)}<br>
-          <strong>Actual Cost (%):</strong> ${yValueActual.toFixed(2)}<br>
+          <strong>Planned (%):</strong> ${yValuePlanned.toFixed(2)}<br>
+          <strong>Actual (%):</strong> ${yValueActual.toFixed(2)}<br>
         `)
         .style("left", `${mouseX + 10}px`) // Offset slightly to the right
         .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
