@@ -15,12 +15,12 @@ const styles = {
   legendFilter: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center"
   },
   legends: {
     display: "flex",
     justifyContent: "center",
     gap: "20px",
-    marginBottom: "20px",
   },
   legend: {
     display: "flex",
@@ -62,13 +62,12 @@ const styles = {
 };
 
 const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, currencySymbol, plannedPointsColor = "steelblue", actualPointsColor = "red", actualLineColor = "yellow", plannedLineColor = "purple" }) => {
-  const svgRef = useRef();
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
-  const containerRef = useRef(null);
+  const chartRef = useRef(null);
   
-  const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+  // const margin = { top: 20, right: 30, bottom: 30, left: 40 };
   const actualData =
     data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
   const plannedData =
@@ -86,7 +85,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         if (interval === "daily") {
           return new Date(d3.timeFormat("%Y-%m-%d")(date));
         } else if (interval === "weekly") {
-          const weekStart = d3.timeMonday(date);
+          const weekStart = d3.timeFriday(date);
           return new Date(d3.timeFormat("%Y-%m-%d")(weekStart));
         } else if (interval === "monthly") {
           return new Date(d3.timeFormat("%Y-%m")(date));
@@ -105,12 +104,12 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         } else if (values.length > 0 && values[0].sumActualCost) {
           return {date: key, value: totalPlanned, ...values[0], startDate: key, sumActualCost: totalPlanned, cumSumActualCost: totalPlannedCumulative / values.length }
         }
-        return { date: key, value: totalPlanned };
+        return { date: new Date(key), value: totalPlanned };
       });
     };
 
   const updateDimensions = () => {
-    const containerWidth = containerRef.current.clientWidth;
+    const containerWidth = chartRef.current.clientWidth;
     setDimensions({ width: containerWidth, height: 500 });
   };
 
@@ -139,17 +138,19 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       timeInterval
     );
 
-    const width = dimensions.width - margin.left - margin.right;
-    const height = dimensions.height - margin.top - margin.bottom;
-  
-    d3.select(containerRef.current).select("svg").remove();
-    const svg = d3
-      .select(containerRef.current)
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    const height = 500;
+    const marginTop = 20;
+    const marginRight = 20;
+    const marginBottom = 30;
+    const marginLeft = 30;
+    let tickWidth = 20;
+    if (timeInterval !== "daily") {
+      tickWidth = 30;
+    }
+    const width = dimensions.width > (plannedPoints.length * tickWidth ) ? dimensions.width : (plannedPoints.length * tickWidth );
+    // const width = dimensions.width > (plannedPoints.length * 50 ) ? dimensions.width : (plannedPoints.length * 50 );
+    // const width = dimensions.width - margin.left - margin.right;
+    // const height = dimensions.height - margin.top - margin.bottom;
 
     const xScale = d3
       .scaleTime()
@@ -163,7 +164,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           3
         ),
       ])
-      .range([0, width]);
+      .range([marginLeft, width - marginRight]);
     const yScale = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(
@@ -172,7 +173,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         d.cumSumBaselinePlannedTotalCost || 0,
         d.sumBaselinePlannedTotalCost || 0
       ))])
-      .range([height, 0]);
+      .range([height - marginBottom, marginTop]);
     const yScaleRight = d3
       .scaleLinear()
       .domain([0, d3.max([...plannedPoints, ...actualPoints], (d) => Math.max(
@@ -181,24 +182,24 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         d.cumSumBaselinePlannedTotalCost || 0,
         d.sumBaselinePlannedTotalCost || 0
       ))])
-      .range([height, 0]);
+      .range([height - marginBottom, marginTop]);
+    
+    // Clear previous chart content
+    d3.select(chartRef.current).selectAll("*").remove();
+    
+    // Create a parent div
+    const parent = d3.select(chartRef.current);
 
-    const xAxis = d3.axisBottom(xScale);
-    let timeFormat = "%d %b";
-    if (timeInterval === "weekly") {
-        const weekNumberFormatter = (d) => {
-            const weekNumber = d3.timeFormat("%U")(d); // Get the week number (starts from 0)
-            const year = d3.timeFormat("%Y")(d); // Get the year
-            const month = d3.timeFormat("%b")(d);
-            return `Week ${+weekNumber + 1},\n${month} ${year}`; // Increment by 1 to start from 1
-        };
-        xAxis.tickFormat(weekNumberFormatter);
-    } else {
-        if (timeInterval === "monthly") {
-            timeFormat = "%b %Y";
-        }
-        xAxis.tickFormat(d3.timeFormat(timeFormat));
-    }
+    // Add SVG for the vertical axis
+    const parentSVG = parent
+      .append("svg")
+      .attr("width", chartRef.current.clientWidth)
+      .attr("height", height)
+      .style("position", "absolute")
+      .style("left", 0)
+      .style("pointer-events", "none")
+      .style("z-index", 1);
+
     const yAxis = d3.axisLeft(yScale).tickFormat((d) => {
         if (d >= 1e9) {
           return `${currencySymbol}${(d / 1e9).toFixed(2)}B`;
@@ -221,11 +222,72 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           return `${currencySymbol}${d}`;
         }
       });
-    svg
+    
+    parentSVG.append("g")
+      .attr("transform", `translate(${marginLeft},0)`)
+      .call(yAxis);
+    
+    parentSVG.append("g")
+      .attr("transform", `translate(${chartRef.current.clientWidth},0)`)
+      .call(yAxisRight);
+
+    const body = parent
+      .append("div")
+      .attr("class", "horizontal-scroll")
+      .style("overflow-x", "auto")
+      .style("-webkit-overflow-scrolling", "touch");
+
+    const svg = body
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .style("display", "block")
+      .style("padding-bottom", "20px");
+
+    const xAxis = d3.axisBottom(xScale);
+    let timeFormat = "%d %b";
+    if (timeInterval === "weekly") {
+      xAxis.ticks(d3.timeWeek.every(1)) // Set weekly ticks
+      .tickFormat((d, i) => {
+        let weekNumber = d3.timeFormat("%U")(d);
+        const monthYear = d3.timeFormat("%b %Y")(d);
+        weekNumber = +weekNumber + 1;
+        return weekNumber % 4 === 0 ?`W${weekNumber} \n ${monthYear}` : `W${weekNumber}`;
+      });
+    } else {
+      if (timeInterval === "monthly") {
+        timeFormat = "%b %Y";
+        xAxis.tickFormat(d3.timeFormat(timeFormat));
+      } else if ((timeInterval === "daily")) {
+        xAxis.ticks(d3.timeDay.every(1))
+        .tickFormat((d, i) => {
+          const dayValue = d3.timeFormat("%a")(d);
+          const month = d3.timeFormat("%b")(d);
+          const date = d3.timeFormat("%d")(d);
+          return (dayValue === "Sun" ? dayValue : dayValue.charAt(0)) + (dayValue === "Sun" ? `,\n ${month} ${date}` : "");
+        })
+        .tickSizeOuter(0);
+      }
+    }
+
+    const xAxisGroup = svg
       .append("g")
       .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${height})`)
+      .attr("transform", `translate(0,${height - marginBottom})`)
       .call(xAxis);
+
+    if (timeInterval === "daily") {
+      xAxisGroup.selectAll(".tick").each(function (d) {
+        // Check if the tick corresponds to a Monday
+        if (d.getDay() === 0) { // Monday has `getDay() === 1`
+          d3.select(this).select("line") // Select the tick line
+            .attr("y2", 20); // Increase the length of the tick line
+          d3.select(this).select("text") // Select the tick line
+            .attr("y", 21); // Increase the length of the tick line
+          d3.select(this).select("text").selectAll("tspan").attr("x", 1);
+        }
+      });
+    }
 
     if (isMobile) {
       svg.selectAll(".x-axis text")
@@ -234,7 +296,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         .style("dominant-baseline", "hanging");
     }
     
-    if (timeInterval === "weekly") {
+    if (timeInterval !== "monthly") {
         // Customize tick labels for multiline rendering
         const customizeXAxisTicks = () => {
           svg.selectAll(".x-axis text") // Select x-axis labels
@@ -258,41 +320,30 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .attr("class", "x-axis-label")
       .attr("x", width / 2)
       .attr(
-        "y",
-        timeInterval === "weekly"
-          ? isMobile
-            ? height + margin.bottom + 40
-            : height + margin.bottom + 20
-          : height + margin.bottom + 25
+        "y", height + 10
       )
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
       .style("fill", isDarkMode ? "white" : "#121212")
       .text(xAxisTitle);
 
-    svg.append("g").attr("class", "y-axis1").call(yAxis);
-    svg
+    parentSVG
         .append("text")
         .attr("class", "y-axis1-label")
         .attr("x", -height / 2)
-        .attr("y", -margin.left - 25)
+        .attr("y", -marginLeft)
         .attr("transform", "rotate(-90)")
         .attr("text-anchor", "middle")
         .style("font-weight", "bold")
         .style("fill", isDarkMode ? "white" : "#121212")
         .text(yAxisTitleLeft);
 
-    svg
-      .append("g")
-      .attr("class", "y-axis2")
-      .attr("transform", `translate(${width}, 0)`)
-      .call(yAxisRight);
-    svg
+    parentSVG
       .append("text")
       .attr("class", "y-axis2-label")
-      .attr("x", width + margin.right - 10)
+      .attr("x", chartRef.current.clientWidth + marginRight - 10)
       .attr("y", height / 2)
-      .attr("transform", `rotate(90, ${width + margin.right + 30}, ${height / 2})`) // Rotate at the label position
+      .attr("transform", `rotate(90, ${chartRef.current.clientWidth + marginRight + 40}, ${height / 2})`) // Rotate at the label position
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
       .style("fill", isDarkMode ? "white" : "#121212")
@@ -325,13 +376,13 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Planned:</strong> ${currencySymbol}${point.cumSumBaselinePlannedTotalCost.toFixed(2)}<br />
-             <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
-             )}`
+             )}<br />
+            <strong>Planned:</strong> ${currencySymbol}${point.cumSumBaselinePlannedTotalCost.toFixed(2)}`
           )
           .style("display", "block")
-          .style("left", `${mouseX + 10}px`)
+          .style("left", `${event.pageX + 10}px`)
           .style("top", `${event.pageY + 10}px`);
       })
       .on("mouseleave", function () {
@@ -365,13 +416,13 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Actual:</strong> ${currencySymbol}${point.cumSumActualCost.toFixed(2)}<br />
-             <strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
                point.startDate
-             )}`
+             )}<br />
+            <strong>Actual:</strong> ${currencySymbol}${point.cumSumActualCost.toFixed(2)}`
           )
           .style("display", "block")
-          .style("left", `${mouseX + 10}px`)
+          .style("left", `${event.pageX + 10}px`)
           .style("top", `${event.pageY + 10}px`);
       })
       .on("mouseleave", function () {
@@ -421,7 +472,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        const [mouseX] = d3.pointer(event);
+        // const [mouseX] = d3.pointer(event);
         tooltip
           .html(
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
@@ -430,7 +481,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
             <strong>Planned Cost:</strong> ${currencySymbol}${d.sumBaselinePlannedTotalCost.toFixed(2)}`
           )
           .style("display", "block")
-          .style("left", `${mouseX + 10}px`)
+          .style("left", `${event.pageX + 10}px`)
           .style("top", `${event.pageY + 10}px`) 
           .style("visibility", "visible");
       })
@@ -458,7 +509,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        const [mouseX] = d3.pointer(event);
+        // const [mouseX] = d3.pointer(event);
         tooltip
           .html(
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
@@ -466,7 +517,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
             )}<br />
             <strong>Actual Cost:</strong> ${currencySymbol}${d.sumActualCost.toFixed(2)}`
           )
-          .style("left", `${mouseX + 10}px`)
+          .style("left", `${event.pageX + 10}px`)
           .style("top", `${event.pageY + 10}px`) 
           .style("display", "block")
           .style("visibility", "visible");
@@ -480,16 +531,16 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
   return (
     <div className={`wrapper ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
-      <div style={styles.groupedBarContainer} ref={containerRef}>
+      <div style={styles.groupedBarContainer}>
         <h3 style={styles.chartTitle}>{chartTitle}</h3>
         <div style={styles.legendFilter}>
           <div style={styles.legends}>
             <div style={styles.legend}>
-              <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }} ></span>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }}></span>
               Planned {currencySymbol}
             </div>
             <div style={styles.legend}>
-              <span style={{ ...styles.legendIcon, ...styles.legendIconActual }} ></span>
+              <span style={{ ...styles.legendIcon, ...styles.legendIconActual }}></span>
               Actual {currencySymbol}
             </div>
           </div>
@@ -499,23 +550,13 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
               onChange={(e) => setTimeInterval(e.target.value)}
               style={styles.dropdown}
             >
-              <option style={styles.dropdownOption} value="daily">
-                Daily
-              </option>
-              <option style={styles.dropdownOption} value="weekly">
-                Weekly
-              </option>
-              <option style={styles.dropdownOption} value="monthly">
-                Monthly
-              </option>
+              <option style={styles.dropdownOption} value="daily">Daily</option>
+              <option style={styles.dropdownOption} value="weekly">Weekly</option>
+              <option style={styles.dropdownOption} value="monthly">Monthly</option>
             </select>
           </div>
         </div>
-        <svg
-          ref={svgRef}
-          width={dimensions.width}
-          height={dimensions.height}
-        ></svg>
+        <div ref={chartRef} style={{ position: "relative", width: "90%", margin: "auto" }} />
       </div>
     </div>
   );

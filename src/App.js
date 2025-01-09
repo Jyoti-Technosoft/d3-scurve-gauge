@@ -16,7 +16,7 @@ function App() {
         isDarkMode={isDarkMode}
         data={data}
         chartTitle="S-Curve"
-        xAxisTitle="Start Date"
+        xAxisTitle="Dates"
         yAxisTitleLeft="Baseline Planned (%)"
         yAxisTitleRight="Physical Progress (%)"
         projectInfoData={projectInfoData}
@@ -25,7 +25,7 @@ function App() {
         isDarkMode={isDarkMode}
         data={data}
         chartTitle="Cost Performance Summary"
-        xAxisTitle="Start Date"
+        xAxisTitle="Dates"
         yAxisTitleLeft="Sum Cummulative Baseline Planned Total Cost"
         yAxisTitleRight="Cummulative Sum Actual Cost"
         currencySymbol="$" // Pass currency symbols from here ₹,..
