@@ -285,7 +285,15 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .style("padding", "10px")
       .style("display", "none")
       .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
-
+    // Tooltip to show every point on hover
+    svg
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .style("fill", "none")
+      .style("pointer-events", "all")
+    
+    // Tooltip to show variance
     const tooltipVariance = svg
       .append("text")
       .attr("class", "tooltip")
@@ -375,6 +383,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .attr("stroke", actualPointsColor)
       .attr("stroke-width", 4);
 
+      // Fixed line tooltip where actual point end
       if (actualPoints.length > 0) {
         const lastPoint = actualPoints[actualPoints.length - 1];
         const xPos = xScale(lastPoint.date);
