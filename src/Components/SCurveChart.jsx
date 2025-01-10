@@ -180,7 +180,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
     // Create a parent div
     const parent = d3.select(chartRef.current);
 
-    // Add SVG for the vertical axis
+    // Add SVG for the vertical axis, vertical axis labels and Variance
     const parentSVG = parent
       .append("svg")
       .attr("width", chartRef.current.clientWidth)
@@ -245,12 +245,12 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
 
     if (timeInterval === "daily") {
       xAxisGroup.selectAll(".tick").each(function (d) {
-        // Check if the tick corresponds to a Monday
-        if (d.getDay() === 0) { // Monday has `getDay() === 1`
+        // Check if the tick corresponds to a Sunday
+        if (d.getDay() === 0) { // Sunday has `getDay() === 0`
           d3.select(this).select("line") // Select the tick line
             .attr("y2", 20); // Increase the length of the tick line
-          d3.select(this).select("text") // Select the tick line
-            .attr("y", 21); // Increase the length of the tick line
+          d3.select(this).select("text") // Select the tick text
+            .attr("y", 21); // Increase the position of the tick text
           d3.select(this).select("text").selectAll("tspan").attr("x", 1);
         }
       });
@@ -268,14 +268,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .append("text")
       .attr("class", "x-axis-label")
       .attr("x", totalWidth / 2)
-      .attr(
-        "y", height + 10
-        // timeInterval === "weekly"
-        //   ? isMobile
-        //     ? height + marginBottom + 40
-        //     : height + marginBottom + 20
-        //   : height + marginBottom + 25
-      )
+      .attr("y", height + 10)
       .attr("text-anchor", "middle")
       .style("font-weight", "bold")
       .style("fill", isDarkMode ? "white" : "#121212")
@@ -328,6 +321,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
     }
   
     d3.selectAll(".tooltip").remove();
+    // Tooltip to show every point on hover
     const tooltip = d3.select("body")
       .append("div")
       .attr("class", "tooltip")
@@ -340,7 +334,6 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
       .style("padding", "10px")
       .style("display", "none")
       .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)");
-    // Tooltip to show every point on hover
     svg
       .append("rect")
       .attr("width", totalWidth)
@@ -477,6 +470,7 @@ const SCurveChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleLeft,
           .style("fill", variance > 0 ? "green" : "red");
       }
 
+  // If required to scroll to the end as initial position enable below line
   // body.node().scrollBy(totalWidth, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeInterval, dimensions, isDarkMode]);
