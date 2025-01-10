@@ -67,7 +67,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
   const [isMobile, setIsMobile] = useState(false);
   const chartRef = useRef(null);
   
-  // const margin = { top: 20, right: 30, bottom: 30, left: 40 };
   const actualData =
     data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
   const plannedData =
@@ -148,9 +147,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       tickWidth = 30;
     }
     const width = dimensions.width > (plannedPoints.length * tickWidth ) ? dimensions.width : (plannedPoints.length * tickWidth );
-    // const width = dimensions.width > (plannedPoints.length * 50 ) ? dimensions.width : (plannedPoints.length * 50 );
-    // const width = dimensions.width - margin.left - margin.right;
-    // const height = dimensions.height - margin.top - margin.bottom;
 
     const xScale = d3
       .scaleTime()
@@ -190,7 +186,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
     // Create a parent div
     const parent = d3.select(chartRef.current);
 
-    // Add SVG for the vertical axis
+    // Add SVG for the vertical axis and vertical axis label
     const parentSVG = parent
       .append("svg")
       .attr("width", chartRef.current.clientWidth)
@@ -282,8 +278,8 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
         if (d.getDay() === 0) { // Monday has `getDay() === 1`
           d3.select(this).select("line") // Select the tick line
             .attr("y2", 20); // Increase the length of the tick line
-          d3.select(this).select("text") // Select the tick line
-            .attr("y", 21); // Increase the length of the tick line
+          d3.select(this).select("text") // Select the tick text
+            .attr("y", 21); // Increase the position of the tick text
           d3.select(this).select("text").selectAll("tspan").attr("x", 1);
         }
       });
@@ -472,7 +468,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        // const [mouseX] = d3.pointer(event);
         tooltip
           .html(
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
@@ -509,7 +504,6 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
           .style("pointer-events", "none");
       })
       .on("mousemove", function (event, d) {
-        // const [mouseX] = d3.pointer(event);
         tooltip
           .html(
             `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
