@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import Dashboard from "./Components/Dashboard";
 import SCurveChart from "./Components/SCurveChart";
@@ -8,9 +8,18 @@ import projectInfoData from "./Json/project-info.json";
 import "./App.css";
 
 function App() {
-  const isDarkMode = false;
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const toggleDarkMode = () => {
+    setIsDarkMode((prevMode) => !prevMode);
+  };
+
   return (
     <div className={`App ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+      <div className="button-container">
+        <button className="mode-toggle-button" onClick={toggleDarkMode}>
+          {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        </button>
+      </div>
       <Dashboard isDarkMode={isDarkMode} projectInfoData={projectInfoData}/>
       <SCurveChart 
         isDarkMode={isDarkMode}
