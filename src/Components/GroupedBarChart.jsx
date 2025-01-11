@@ -116,6 +116,14 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
     setIsMobile(window.innerWidth <= 800);
   };
 
+  const getTooltipDateFormat = () => {
+    let timeFormat = "%b %d, %Y";
+    if (timeInterval === "monthly") {
+      timeFormat = "%b %Y"
+    }
+    return timeFormat;    
+  }
+
   useEffect(() => {
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -372,7 +380,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat(getTooltipDateFormat())(
                point.startDate
              )}<br />
             <strong>Planned:</strong> ${currencySymbol}${point.cumSumBaselinePlannedTotalCost.toFixed(2)}`
@@ -412,7 +420,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
 
         tooltip
           .html(
-            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat(getTooltipDateFormat())(
                point.startDate
              )}<br />
             <strong>Actual:</strong> ${currencySymbol}${point.cumSumActualCost.toFixed(2)}`
@@ -470,7 +478,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .on("mousemove", function (event, d) {
         tooltip
           .html(
-            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat(getTooltipDateFormat())(
               d.startDate
             )}<br />
             <strong>Planned Cost:</strong> ${currencySymbol}${d.sumBaselinePlannedTotalCost.toFixed(2)}`
@@ -506,7 +514,7 @@ const GroupedBarChart = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTitleL
       .on("mousemove", function (event, d) {
         tooltip
           .html(
-            `<strong>Date:</strong> ${d3.timeFormat("%b %d, %Y")(
+            `<strong>Date:</strong> ${d3.timeFormat(getTooltipDateFormat())(
               d.startDate
             )}<br />
             <strong>Actual Cost:</strong> ${currencySymbol}${d.sumActualCost.toFixed(2)}`
