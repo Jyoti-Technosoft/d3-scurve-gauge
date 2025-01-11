@@ -1,4 +1,4 @@
-body {
+/* body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -11,4 +11,473 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+} */
+
+:root {
+  /* Base colors */
+  --primary-color: #4f46e5;
+  --primary-light: #818cf8;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --warning-color: #f59e0b;
+  --warning-light: #fbbf24;
+  --danger-color: #ef4444;
+  --danger-light: #f87171;
+  
+  /* Gray scale */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--gray-50);
+  color: var(--gray-800);
+}
+
+.gantt-chart-container {
+  display: flex;
+  margin: 20px;
+  /* width: 100%; */
+  height: 450px;
+  max-height: 450px;
+  overflow-y: auto;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.task-table-container {
+  /* position: relative;
+  resize: horizontal; */
+  /* overflow-y: hidden; */
+  height: 100%;
+  width: 200px; 
+  max-width: 80%; 
+  border-right: 1px solid var(--gray-200);
+}
+
+.split-bar {
+  width: 5px; /* Thickness of the split bar */
+  background: #ccc; /* Visual appearance */
+  cursor: ew-resize; /* Resizing cursor */
+  position: relative;
+  z-index: 1;
+}
+
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.task-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--gray-50);
+  z-index: 10;
+  height: 55px;
+}
+
+.task-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  white-space: nowrap;
+  vertical-align: bottom;
+  height: 55px;
+  background-color: var(--gray-50);
+}
+
+.task-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  white-space: nowrap;
+  height: 40px;
+  background-color: white;
+}
+
+.task-table tr {
+  background-color: white;
+}
+
+.task-table tr:hover {
+  background-color: var(--gray-50);
+}
+
+.task-row {
+  transition: background-color 0.2s;
+}
+
+.task-row:hover {
+  background-color: var(--gray-50);
+}
+
+.task-row.project {
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.task-row.phase {
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.task-row.task {
+  color: var(--gray-700);
+}
+
+/* .task-row.milestone {
+  font-style: italic;
+  color: var(--gray-600);
+} */
+
+.expand-button {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  margin-right: 8px;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: color 0.2s ease;
+}
+
+.expand-button:hover {
+  color: var(--gray-700);
+}
+
+.expand-button.expanded {
+  transform: rotate(0deg);
+}
+
+.chart-container {
+  height: 100%;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  background: white;
+}
+
+.chart-container svg {
+  display: block;
+  min-width: 100%;
+}
+
+/* Ensure headers stay fixed while scrolling */
+.header-group {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+
+/* Custom scrollbar for better visibility */
+.chart-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Gantt Chart Headers */
+.year-background, .month-background {
+  fill: var(--gray-50);
+  stroke: var(--gray-200);
+  stroke-width: 1;
+}
+
+.year-label, .month-label {
+  fill: var(--gray-700);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.year-separator, .month-separator {
+  stroke: var(--gray-200);
+  stroke-width: 1;
+}
+
+.header-group {
+  font-family: inherit;
+}
+
+.year-cell:first-child .year-separator,
+.month-cell:first-child .month-separator {
+  display: none;
+}
+
+/* Ensure text is always visible */
+.year-label, .month-label {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Headers */
+.header-group {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-group text {
+  font-size: 12px;
+  fill: var(--gray-700);
+  font-weight: 500;
+  text-anchor: middle;
+  dominant-baseline: central;
+  user-select: none;
+}
+
+.year-header {
+  background: white;
+  height: 30px;
+}
+
+.year-header text {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--gray-900);
+}
+
+.year-text {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  fill: var(--gray-900) !important;
+}
+
+.month-header {
+  height: 25px;
+}
+
+.month-header text {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--gray-800);
+}
+
+.day-header {
+  height: 25px;
+}
+
+.day-header text {
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--gray-700);
+}
+
+.header-cell {
+  fill: var(--gray-50);
+  stroke: var(--gray-200);
+  stroke-width: 1;
+}
+
+.year-header .header-cell {
+  fill: white;
+  stroke-width: 1;
+}
+
+.month-header .header-cell {
+  fill: var(--gray-50);
+}
+
+.day-header .header-cell {
+  fill: white;
+}
+
+/* Ensure headers are visible */
+.year-header, .month-header, .day-header {
+  pointer-events: none;
+}
+
+.year-header text, .month-header text, .day-header text {
+  pointer-events: none;
+}
+
+/* Remove any text decoration */
+text {
+  text-decoration: none;
+  font-family: inherit;
+}
+
+/* Task bars and milestones */
+.bar {
+  rx: 4px;
+  ry: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bar.project {
+  fill: var(--primary-color);
+  opacity: 0.9;
+}
+
+.bar.phase {
+  fill: var(--success-color);
+  opacity: 0.85;
+}
+
+.bar.task {
+  fill: var(--warning-color);
+  opacity: 0.8;
+}
+
+.bar:hover {
+  opacity: 1;
+}
+
+/* .milestone {
+  fill: var(--danger-color);
+  opacity: 0.9;
+  cursor: pointer;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: all 0.15s ease-out;
+  will-change: transform;
+} */
+
+/* .milestone:hover {
+  opacity: 1;
+  transform: scale(1.2);
+} */
+
+.milestoneDiamond {
+  fill: var(--danger-color);
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.milestoneDiamond:hover {
+  opacity: 1;
+}
+
+/* Grid */
+.grid-line {
+  stroke: var(--gray-100);
+  stroke-width: 1;
+  stroke-dasharray: 2,2;
+}
+
+/* Tooltip */
+.tooltip {
+  position: fixed;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 200px;
+  transition: opacity 0.2s ease;
+  will-change: transform;
+}
+
+.tooltip strong {
+  color: var(--gray-900);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tooltip-label {
+  color: var(--gray-500);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+/* Scrollbars */
+.task-table-container::-webkit-scrollbar,
+.chart-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.task-table-container::-webkit-scrollbar-track,
+.chart-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+.task-table-container::-webkit-scrollbar-thumb,
+.chart-container::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+}
+
+.task-table-container::-webkit-scrollbar-thumb:hover,
+.chart-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Progress bar styles */
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: var(--gray-100);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--blue-500);
+  transition: width 0.3s ease;
+}
+
+.progress-bar span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--gray-700);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Status colors */
+.task-row td:nth-child(7) {
+  font-weight: 500;
+}
+
+.task-row td:nth-child(9) {
+  font-weight: 500;
 }
