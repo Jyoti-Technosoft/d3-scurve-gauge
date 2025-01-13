@@ -9,6 +9,7 @@ import blMilestoneActivity from "./Json/BL-milestoneActivity.json";
 import upMilestoneActivity from "./Json/UP-milestoneActivity.json";
 import "./App.css";
 import GanttChart from "./Components/GanttChart";
+import SynchronizedScroll from "./Components/SynchronizedScroll";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -189,6 +190,7 @@ function App() {
 
   return (
     <div className={`App ${isDarkMode ? "dark-mode" : "light-mode"}`}>
+      <SynchronizedScroll />
       <div className="button-container">
         <button className="mode-toggle-button" onClick={toggleDarkMode}>
           {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
