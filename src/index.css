@@ -59,7 +59,7 @@ body {
   /* width: 100%; */
   height: 450px;
   max-height: 450px;
-  overflow-y: auto;
+  /* overflow-y: auto; */
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
   border-radius: 8px;
@@ -69,9 +69,9 @@ body {
 .task-table-container {
   /* position: relative;
   resize: horizontal; */
-  /* overflow-y: hidden; */
+  overflow-y: auto;
   height: 100%;
-  width: 200px; 
+  /* width: 200px;  */
   max-width: 80%; 
   border-right: 1px solid var(--gray-200);
 }
@@ -175,13 +175,27 @@ body {
 .chart-container {
   height: 100%;
   flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  /* overflow-y: hidden; */
+  position: relative;
+  background: white;
+}
+
+.chart-container-1 {
+  height: calc(100% - 80px);
+  flex: 1;
+  /* overflow-x: auto; */
+  /* overflow-y: hidden; */
   position: relative;
   background: white;
 }
 
 .chart-container svg {
+  display: block;
+  min-width: 100%;
+}
+
+.chart-container-1 svg {
   display: block;
   min-width: 100%;
 }
@@ -210,6 +224,24 @@ body {
 }
 
 .chart-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+.chart-container-1::-webkit-scrollbar {
+  height: 8px;
+}
+
+.chart-container-1::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.chart-container-1::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 4px;
+}
+
+.chart-container-1::-webkit-scrollbar-thumb:hover {
   background: var(--gray-400);
 }
 
@@ -426,24 +458,28 @@ text {
 
 /* Scrollbars */
 .task-table-container::-webkit-scrollbar,
-.chart-container::-webkit-scrollbar {
+.chart-container::-webkit-scrollbar,
+.chart-container-1::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .task-table-container::-webkit-scrollbar-track,
-.chart-container::-webkit-scrollbar-track {
+.chart-container::-webkit-scrollbar-track,
+.chart-container-1::-webkit-scrollbar-track {
   background: var(--gray-100);
 }
 
 .task-table-container::-webkit-scrollbar-thumb,
-.chart-container::-webkit-scrollbar-thumb {
+.chart-container::-webkit-scrollbar-thumb,
+.chart-container-1::-webkit-scrollbar-thumb {
   background: var(--gray-300);
   border-radius: 4px;
 }
 
 .task-table-container::-webkit-scrollbar-thumb:hover,
-.chart-container::-webkit-scrollbar-thumb:hover {
+.chart-container::-webkit-scrollbar-thumb:hover,
+.chart-container-1::-webkit-scrollbar-thumb:hover {
   background: var(--gray-400);
 }
 
@@ -480,4 +516,13 @@ text {
 
 .task-row td:nth-child(9) {
   font-weight: 500;
+}
+
+.hidden-scrollbar {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For IE and Edge */
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
 }

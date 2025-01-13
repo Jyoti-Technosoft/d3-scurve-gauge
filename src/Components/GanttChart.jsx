@@ -63,31 +63,31 @@ const styles = {
 
 const TaskTable = ({ tasks, expandedTasks, onToggleExpand }) => {
   const renderTask = (task, level = 0) => {
-    const isExpanded = expandedTasks.includes(task.id);
+    const isExpanded = expandedTasks.includes(task.objectId);
     const hasChildren = task.children && task.children.length > 0;
-    const duration = Math.ceil((task.end - task.start) / (1000 * 60 * 60 * 24));
+    const duration = Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24));
     const progress = task.progress || 0;
     const status = task.status || 'Not Started';
     const owner = task.owner || '-';
     const priority = task.priority || 'Medium';
 
     return (
-      <React.Fragment key={task.id}>
+      <React.Fragment key={task.objectId}>
         <tr className={`task-row ${task.type}`}>
           <td style={{ paddingLeft: `${level * 20}px` }}>
             {hasChildren && (
               <button 
                 className={`expand-button ${isExpanded ? 'expanded' : ''}`}
-                onClick={() => onToggleExpand(task.id)}
+                onClick={() => onToggleExpand(task.objectId)}
               >
                 {isExpanded ? '▼' : '▶'}
               </button>
             )}
-            {task.task}
+            {task.name}
           </td>
           {/* <td>{task.type}</td>
-          <td>{task.start.toLocaleDateString()}</td>
-          <td>{task.end.toLocaleDateString()}</td>
+          <td>{task.startDate.toLocaleDateString()}</td>
+          <td>{task.finishDate.toLocaleDateString()}</td>
           <td>{duration} days</td>
           <td>
             <div className="progress-bar">
@@ -133,22 +133,49 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand }) => {
   );
 };
 
-const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
+const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }) => {
     const [timeInterval, setTimeInterval] = useState("daily");
   const svgRef = useRef();
+  const headerSvgRef = useRef();
   const taskTableRef = useRef();
+  const headerContainerRef = useRef();
+  const chartContainerRef = useRef();
   const splitBarRef = useRef();
   const [expandedTasks, setExpandedTasks] = useState([1, 5]); // Initially expand top-level tasks
-//   const preparedTasks = () => {
-//     console.log("DATA BASE ===> ", blMilestoneActivity);
-//     console.log("DATA UPDA ===> ", upMilestoneActivity);
-//   }
-//   preparedTasks();
+  // const preparedTasks = () => {
+  //   // console.log("DATA BASE ===> ", blMilestoneActivity);
+  //   // console.log("DATA UPDA ===> ", upMilestoneActivity);
+  //   // console.log("WBS1 DATA ===> ", wbsData);
+  //   const map = new Map(); // Map to store objects by their `objectId`
+  //   const result = []; // Final hierarchical list
+
+  //   // Step 1: Add all objects to the map and initialize `childrens` array
+  //   wbsData.forEach(item => {
+  //       map.set(item.objectId, { ...item, children: [] });
+  //   });
+
+  //   // Step 2: Build the hierarchy
+  //   wbsData.forEach(item => {
+  //       if (item.parentObjectId === null) {
+  //           // Top-level WBS (no parent)
+  //           result.push({ ...map.get(item.objectId), type: "WBS" });
+  //       } else {
+  //           // Child WBS: find its parent and add it to the `children` array
+  //           const parent = map.get(item.parentObjectId);
+  //           if (parent) {
+  //               parent.children.push(map.get(item.objectId));
+  //           }
+  //       }
+  //   });
+  //   console.log("DATA ==> ", result)
+  //   return result;
+  // }
+  // preparedTasks();
 
   const flattenTasks = (tasks, result = []) => {
     tasks.forEach(task => {
       result.push(task);
-      if (task.children && expandedTasks.includes(task.id)) {
+      if (task.children && expandedTasks.includes(task.objectId)) {
         flattenTasks(task.children, result);
       }
     });
@@ -170,6 +197,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     
     // Clear any existing SVG content
     d3.select(svgRef.current).selectAll("*").remove();
+    d3.select(headerSvgRef.current).selectAll("*").remove();
 
     // Set up dimensions
     const headerHeights = {
@@ -179,7 +207,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     };
     const totalHeaderHeight = headerHeights.year + headerHeights.month + headerHeights.day;
     const margin = { 
-      top: totalHeaderHeight,
+      top: 0,
       right: 30, 
       bottom: 20, 
       left: 0 
@@ -187,13 +215,13 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     
     // Calculate minimum width needed for all days
     const minDayWidth = 40; // Increased minimum width per day
-    const startDate = d3.min(flatTasks, d => d.start);
-    const endDate = d3.max(flatTasks, d => d.end);
+    const startDate = d3.min(flatTasks, d => d.startDate);
+    const endDate = d3.max(flatTasks, d => d.finishDate);
     const totalDays = d3.timeDay.count(startDate, endDate);
     const minChartWidth = totalDays * minDayWidth;
     
     // Calculate container width
-    const containerWidth = document.querySelector('.chart-container').clientWidth;
+    const containerWidth = document.querySelector('.chart-container-1').clientWidth;
     const chartWidth = Math.max(minChartWidth, containerWidth);
     const rowHeight = 56; // 40px height + 16px padding (8px top + 8px bottom)
     const barHeight = 32; // Adjusted bar height
@@ -203,21 +231,26 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     // Create SVG with the calculated dimensions
     const svg = d3.select(svgRef.current)
       .attr('width', chartWidth)
-      .attr('height', 'auto');
+      .attr('height', chartHeight + margin.top + margin.bottom);
+    const headerSvg = d3.select(headerSvgRef.current)
+      .attr('width', chartWidth)
+      .attr('height', totalHeaderHeight);
 
+      debugger
     // Update time scale with new width
     const timeScale = d3.scaleTime()
       .domain([startDate, endDate])
       .range([0, chartWidth - margin.left - margin.right]);
 
     // Create chart container with horizontal scroll if needed
-    const chartContainer = d3.select('.chart-container')
+    const chartContainer = d3.select('.chart-container-1')
       .style('overflow-x', chartWidth > containerWidth ? 'auto' : 'hidden');
 
     // Create header group
-    const headerGroup = svg.append('g')
+    const headerGroup = headerSvg.append('g')
       .attr('class', 'header-group')
-      .attr('transform', `translate(${margin.left},0)`);
+      // .attr('transform', `translate(${margin.left},0)`);
+      .attr('transform', `translate(-25,0)`);
 
     // Create chart group with proper offset
     const chartGroup = svg.append('g')
@@ -230,7 +263,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
       .range([0, chartHeight - rowHeight]); // Adjust range to account for row height
 
     // Add year headers
-    const years = d3.timeYear.range(...timeScale.domain());
+    const years = d3.timeYear.range(startDate, endDate);
     headerGroup.append('g')
       .attr('class', 'year-header')
       .selectAll('.year-cell')
@@ -254,12 +287,12 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
 
         // Add year text centered in the visible area
         year.append('text')
-          .attr('x', yearStart + yearWidth / 2)
-          .attr('y', headerHeights.year / 2)
+          .attr('x', yearStart + 30)
+          .attr('y', (headerHeights.year / 2) - 5)
           .attr('dy', '0.35em')
           .attr('text-anchor', 'middle')
           .attr('class', 'year-label')
-          .text(d3.timeFormat('%Y')(d));
+          .text(d3.timeFormat('%Y')(d) + " → ");
 
         // Add vertical separator line
         year.append('line')
@@ -297,7 +330,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
         // Add month text centered
         month.append('text')
           .attr('x', monthStart + monthWidth / 2)
-          .attr('y', headerHeights.month / 2)
+          .attr('y', (headerHeights.month / 2) - 5)
           .attr('dy', '0.35em')
           .attr('text-anchor', 'middle')
           .attr('class', 'month-label')
@@ -347,7 +380,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
       const rowY = index * rowHeight; // Exact row position
       
       if (task.type === 'milestone') {
-        const x = timeScale(task.start);
+        const x = timeScale(task.startDate);
         const y = rowY + (rowHeight / 2); // Center of row
         const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
         
@@ -362,12 +395,12 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
         chartGroup.append('rect')
           .attr('class', `bar ${task.type}`)
           .attr('y', rowY + verticalPadding)
-          .attr('x', timeScale(task.start))
+          .attr('x', timeScale(task.startDate))
           .attr('height', barHeight)
-          .attr('width', Math.max(timeScale(task.end) - timeScale(task.start), 1))
+          .attr('width', Math.max(timeScale(task.finishDate) - timeScale(task.startDate), 1))
           .attr('rx', 3)
           .attr('ry', 3)
-          .attr('data-task-id', task.id);
+          .attr('data-task-id', task.objectId);
       }
     });
 
@@ -396,7 +429,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     // Helper function to find task by element
     const findTaskByElement = (element) => {
       const taskId = element.getAttribute('data-task-id');
-      return flatTasks.find(t => t.id.toString() === taskId);
+      return flatTasks.find(t => t.objectId.toString() === taskId);
     };
 
     svg.selectAll('.bar, .milestoneDiamond')
@@ -407,11 +440,11 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
           clearTimeout(tooltipTimeout);
           
           const tooltipContent = `
-            <strong>${task.task}</strong><br/>
+            <strong>${task.name}</strong><br/>
             <span class="tooltip-label">Type:</span> ${task.type}<br/>
-            <span class="tooltip-label">Start:</span> ${task.start.toLocaleDateString()}<br/>
-            <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.end.toLocaleDateString()}
-            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.end - task.start) / (1000 * 60 * 60 * 24))} days` : ''}
+            <span class="tooltip-label">Start:</span> ${task.startDate.toLocaleDateString()}<br/>
+            <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.finishDate.toLocaleDateString()}
+            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
           `;
 
           const tooltipWidth = 200;
@@ -492,6 +525,18 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
     document.addEventListener("mouseup", stopDragging);
   };
 
+  const handleScroll = (source, target) => {
+    const sourceScrollTop = source.scrollTop;
+    const sourceScrollLeft = source.scrollLeft;
+    target.scrollTop = sourceScrollTop;
+    target.scrollLeft = sourceScrollLeft;
+  };
+
+  const handleHorizontalScroll = (source, target) => {
+    const sourceScrollLeft = source.scrollLeft;
+    target.scrollLeft = sourceScrollLeft;
+  };
+
   return (
     <div>
         <div style={styles.dropdownContainer}>
@@ -506,16 +551,27 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity }) => {
             </select>
         </div>
         <div className="gantt-chart-container">
-            <div className="task-table-container" ref={taskTableRef} style={{ minWidth: "200px", maxWidth: "80%" }}>
+            <div className="task-table-container" ref={taskTableRef} style={{ minWidth: "200px", maxWidth: "80%" }} onScroll={() =>
+          handleScroll(taskTableRef.current, chartContainerRef.current)
+        }>
                 <TaskTable 
                     tasks={tasks} 
                     expandedTasks={expandedTasks}
                     onToggleExpand={handleToggleExpand}
                 />
             </div>
-            <div className="split-bar" ref={splitBarRef} onMouseDown={startDragging}></div>
+            <div className="split-bar" ref={splitBarRef} onMouseDown={startDragging} ></div>
             <div className="chart-container">
-                <svg ref={svgRef}></svg>
+              <div className='hidden-scrollbar' style={{ overflowX: "auto", overflowY: "hidden" }} ref={headerContainerRef} onScroll={() =>
+                  handleHorizontalScroll(headerContainerRef.current, chartContainerRef.current)
+                }>
+                <svg ref={headerSvgRef}></svg>
+              </div>
+              <div className="chart-container-1" ref={chartContainerRef} onScroll={(event) =>
+                {handleScroll(chartContainerRef.current, taskTableRef.current); handleScroll(chartContainerRef.current, headerContainerRef.current);}
+              }>
+                  <svg ref={svgRef}></svg>
+              </div>
             </div>
         </div>
     </div>
