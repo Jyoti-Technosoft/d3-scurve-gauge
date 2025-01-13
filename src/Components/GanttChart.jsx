@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const styles = {
-    groupedBarContainer: {
+    ganttChart: {
       margin: "auto",
       width: "90%",
       paddingBottom: "5rem"
@@ -44,7 +44,8 @@ const styles = {
     },
     dropdownContainer: {
       margin: "20px 0",
-      textAlign: "center",
+      display: "flex",
+      justifyContent: "end"
     },
     dropdown: {
       width: "200px",
@@ -61,7 +62,7 @@ const styles = {
     },
   };
 
-const TaskTable = ({ tasks, expandedTasks, onToggleExpand }) => {
+const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked }) => {
   const renderTask = (task, level = 0) => {
     const isExpanded = expandedTasks.includes(task.objectId);
     const hasChildren = task.children && task.children.length > 0;
@@ -74,13 +75,14 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand }) => {
     return (
       <React.Fragment key={task.objectId}>
         <tr className={`task-row ${task.type}`}>
-          <td style={{ paddingLeft: `${level * 20}px` }}>
+          <td style={{ paddingLeft: `${level * 20}px` }} onClick={()=> showTaskTable(task)}>
             {hasChildren && (
               <button 
                 className={`expand-button ${isExpanded ? 'expanded' : ''}`}
+                style={{ width: '18px', height: '16px', verticalAlign: 'middle' }}
                 onClick={() => onToggleExpand(task.objectId)}
               >
-                {isExpanded ? '▼' : '▶'}
+                {isExpanded ? '-' : '+'}
               </button>
             )}
             {task.name}
@@ -142,6 +144,13 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
   const chartContainerRef = useRef();
   const splitBarRef = useRef();
   const [expandedTasks, setExpandedTasks] = useState([1, 5]); // Initially expand top-level tasks
+  const [isTaskClicked, setIsTaskClicked] = useState(false);
+  const [task, setTask] = useState();
+
+  const showTaskTable = (task) => {
+    setTask(task);
+    setIsTaskClicked(true);
+  }
   // const preparedTasks = () => {
   //   // console.log("DATA BASE ===> ", blMilestoneActivity);
   //   // console.log("DATA UPDA ===> ", upMilestoneActivity);
@@ -538,7 +547,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
   };
 
   return (
-    <div>
+    <div style={styles.ganttChart}>
         <div style={styles.dropdownContainer}>
             <select
               value={timeInterval}
@@ -558,6 +567,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
                     tasks={tasks} 
                     expandedTasks={expandedTasks}
                     onToggleExpand={handleToggleExpand}
+                    showTaskTable={showTaskTable}
+                    isTaskClicked={isTaskClicked}
                 />
             </div>
             <div className="split-bar" ref={splitBarRef} onMouseDown={startDragging} ></div>
@@ -574,6 +585,18 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
               </div>
             </div>
         </div>
+        {isTaskClicked &&
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Task Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>{task.name}</td></tr>
+            </tbody>
+          </table>
+        }
     </div>
   );
 };

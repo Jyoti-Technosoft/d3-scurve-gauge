@@ -3,13 +3,13 @@ import React, { useState } from "react";
 import Dashboard from "./Components/Dashboard";
 import SCurveChart from "./Components/SCurveChart";
 import GroupedBarChart from "./Components/GroupedBarChart";
+import GanttChart from "./Components/GanttChart";
 import data from "./Json/spread-period.json";
 import projectInfoData from "./Json/project-info.json";
 import blMilestoneActivity from "./Json/BL-milestoneActivity.json";
 import upMilestoneActivity from "./Json/UP-milestoneActivity.json";
 import wbsData from "./Json/wbsFile.json";
 import "./App.css";
-import GanttChart from "./Components/GanttChart";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
