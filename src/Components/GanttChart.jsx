@@ -2,75 +2,45 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const styles = {
-    ganttChart: {
-      margin: "auto",
-      width: "90%",
-      paddingBottom: "5rem"
-    },
-    chartTitle: {
-      fontSize: "24px",
-      fontWeight: "bold",
-      marginTop: "5rem",
-    },
-    legendFilter: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    },
-    legends: {
-      display: "flex",
-      justifyContent: "center",
-      gap: "20px",
-    },
-    legend: {
-      display: "flex",
-      alignItems: "center",
-      fontSize: "14px",
-    },
-    legendIcon: {
-      width: "16px",
-      height: "16px",
-      marginRight: "5px",
-      display: "inline-block",
-      borderRadius: "4px",
-    },
-    legendIconPlanned: {
-      backgroundColor: "steelblue",
-      opacity: "0.7",
-    },
-    legendIconActual: {
-      backgroundColor: "red",
-      opacity: "0.7",
-    },
-    dropdownContainer: {
-      margin: "20px 0",
-      display: "flex",
-      justifyContent: "end"
-    },
-    dropdown: {
-      width: "200px",
-      padding: "10px",
-      fontSize: "16px",
-      cursor: "pointer",
-      borderRadius: "5px",
-      outline: "none",
-      transition: "all 0.3s ease",
-      boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-    },
-    dropdownOption: {
-      padding: "10px"
-    },
-  };
+  ganttChart: {
+    margin: "auto",
+    width: "90%",
+    paddingBottom: "5rem"
+  },
+  chartTitle: {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginTop: "5rem",
+  },
+  dropdownContainer: {
+    margin: "20px 0",
+    display: "flex",
+    justifyContent: "end"
+  },
+  dropdown: {
+    width: "200px",
+    padding: "10px",
+    fontSize: "16px",
+    cursor: "pointer",
+    borderRadius: "5px",
+    outline: "none",
+    transition: "all 0.3s ease",
+    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+  },
+  dropdownOption: {
+    padding: "10px"
+  },
+};
 
 const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked }) => {
   const renderTask = (task, level = 0) => {
     const isExpanded = expandedTasks.includes(task.objectId);
     const hasChildren = task.children && task.children.length > 0;
-    const duration = Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24));
-    const progress = task.progress || 0;
-    const status = task.status || 'Not Started';
-    const owner = task.owner || '-';
-    const priority = task.priority || 'Medium';
+    // const duration = Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24));
+    // const progress = task.progress || 0;
+    // const status = task.status || 'Not Started';
+    // const owner = task.owner || '-';
+    // const priority = task.priority || 'Medium';
 
     return (
       <React.Fragment key={task.objectId}>
@@ -146,6 +116,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
   const [expandedTasks, setExpandedTasks] = useState([1, 5]); // Initially expand top-level tasks
   const [isTaskClicked, setIsTaskClicked] = useState(false);
   const [task, setTask] = useState();
+  const [expandedSubTasks, setExpandedSubTasks] = useState({}); // State to track which tasks are expanded
 
   const showTaskTable = (task) => {
     setTask(task);
@@ -245,7 +216,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
       .attr('width', chartWidth)
       .attr('height', totalHeaderHeight);
 
-      debugger
+    // debugger
     // Update time scale with new width
     const timeScale = d3.scaleTime()
       .domain([startDate, endDate])
@@ -267,12 +238,14 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
     // Set up scales with proper domain and range
-    const taskScale = d3.scaleLinear()
-      .domain([0, flatTasks.length - 1])  // Adjust domain to account for zero-based index
-      .range([0, chartHeight - rowHeight]); // Adjust range to account for row height
+    // const taskScale = d3.scaleLinear()
+    //   .domain([0, flatTasks.length - 1])  // Adjust domain to account for zero-based index
+    //   .range([0, chartHeight - rowHeight]); // Adjust range to account for row height
+    const startOfFirstMonth = d3.timeMonth.floor(startDate);
+    const startOfFirstYear = d3.timeYear.floor(startDate);
 
     // Add year headers
-    const years = d3.timeYear.range(startDate, endDate);
+    const years = d3.timeYear.range(startOfFirstYear, endDate);
     headerGroup.append('g')
       .attr('class', 'year-header')
       .selectAll('.year-cell')
@@ -296,12 +269,14 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
 
         // Add year text centered in the visible area
         year.append('text')
-          .attr('x', yearStart + 30)
+          .attr('x', function() {
+            return d.getFullYear() === years[0].getFullYear() ? yearStart + yearWidth - 30 : yearStart + 30;
+          })
           .attr('y', (headerHeights.year / 2) - 5)
           .attr('dy', '0.35em')
-          .attr('text-anchor', 'middle')
+          // .attr('text-anchor', 'middle')
           .attr('class', 'year-label')
-          .text(d3.timeFormat('%Y')(d) + " → ");
+          .text(d => (d3.timeFormat('%Y')(d)) + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
 
         // Add vertical separator line
         year.append('line')
@@ -313,7 +288,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
       });
 
     // Add month headers with similar dynamic centering
-    const months = d3.timeMonth.range(...timeScale.domain());
+    const months = d3.timeMonth.range(startOfFirstMonth, endDate);
     headerGroup.append('g')
       .attr('class', 'month-header')
       .attr('transform', `translate(0,${headerHeights.year})`)
@@ -327,7 +302,6 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
         const monthStart = timeScale(d);
         const monthEnd = timeScale(d3.timeMonth.offset(d, 1));
         const monthWidth = monthEnd - monthStart;
-
         // Add month background
         month.append('rect')
           .attr('x', monthStart)
@@ -338,10 +312,12 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
 
         // Add month text centered
         month.append('text')
-          .attr('x', monthStart + monthWidth / 2)
+          .attr('x', function() {
+            return d.getMonth() === 0 ? (monthStart + monthWidth - 15) : (monthStart + monthWidth / 2);
+          })
           .attr('y', (headerHeights.month / 2) - 5)
           .attr('dy', '0.35em')
-          .attr('text-anchor', 'middle')
+          // .attr('text-anchor', 'middle')
           .attr('class', 'month-label')
           .text(d3.timeFormat('%b')(d));
 
@@ -546,6 +522,66 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     target.scrollLeft = sourceScrollLeft;
   };
 
+  const toggleExpandCollapse = (taskId) => {
+    setExpandedSubTasks((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
+  const getFormattedDate = (date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  const renderTaskRows = (task) => {
+    const isExpanded = expandedSubTasks[task.objectId];
+    return (
+      <>
+        <tr>
+          <td>
+            {task.children.length > 0 && (
+              <span
+                onClick={() => toggleExpandCollapse(task.objectId)}
+                style={{ cursor: "pointer", padding: "0 5px" }}
+              >
+                {isExpanded ? "−" : "+"}
+              </span>
+            )}
+          </td>
+          <td>{task.code}</td>
+          <td>{task.name}</td>
+          <td>{task.projectType}</td>
+          <td>{getFormattedDate(task.startDate)}</td>
+          <td>{getFormattedDate(task.finishDate)}</td>
+        </tr>
+        {isExpanded && task.children.length > 0 && (
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Task Code</th>
+                    <th>Task Name</th>
+                    <th>Project Type</th>
+                    <th>Start Date</th>
+                    <th>Finish Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {task.children.map((child, index) => (
+                    <React.Fragment key={index}>
+                      {renderTaskRows(child)}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+        )}
+      </>
+    );
+  };
+
   return (
     <div style={styles.ganttChart}>
         <div style={styles.dropdownContainer}>
@@ -585,18 +621,23 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
               </div>
             </div>
         </div>
-        {isTaskClicked &&
+        {isTaskClicked && (
           <table className="task-table">
             <thead>
               <tr>
+                <th></th>
+                <th>Task Code</th>
                 <th>Task Name</th>
+                <th>Project Type</th>
+                <th>Start Date</th>
+                <th>Finish Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>{task.name}</td></tr>
+              {renderTaskRows(task)}
             </tbody>
           </table>
-        }
+        )}
     </div>
   );
 };
