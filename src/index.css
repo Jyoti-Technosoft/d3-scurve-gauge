@@ -53,88 +53,83 @@ body {
   color: var(--gray-800);
 }
 
-.gantt-chart-container {
+/* .gantt-chart-container {
   display: flex;
   margin: 20px;
-  /* width: 100%; */
   height: 450px;
   max-height: 450px;
-  /* overflow-y: auto; */
-  background: var(--gray-50);
   border: 1px solid var(--gray-200);
   border-radius: 8px;
   box-shadow: var(--shadow-md);
-}
+} */
 
-.task-table-container {
-  /* position: relative;
-  resize: horizontal; */
-  overflow-x: scroll;
-  overflow-y: hidden;
+/* .task-table-container {
+  overflow-y: auto;
   height: 100%;
-  /* width: 200px;  */
   max-width: 80%; 
   border-right: 1px solid var(--gray-200);
-}
+  min-Width:200px;
+} */
 
-.split-bar {
+/* .split-bar {
   width: 5px; /* Thickness of the split bar */
-  background: #ccc; /* Visual appearance */
-  cursor: ew-resize; /* Resizing cursor */
-  position: relative;
-  z-index: 1;
-}
+  /* background: #ccc; Visual appearance */
+  /* cursor: ew-resize; /* Resizing cursor */
+  /* position: relative; */
+  /* z-index: 1; */ 
+/* } */ 
 
-.task-table {
+/* .task-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
-}
+} */
 
-.task-table thead {
+/* .task-table thead {
   position: sticky;
   top: 0;
   background: var(--gray-50);
   z-index: 10;
   height: 55px;
-}
+} */
 
-.task-table th {
+/* .task-table .darkmode-thead{
+  background: #121212;
+} */
+
+/* .task-table th {
   padding: 12px;
   text-align: left;
   font-weight: 600;
-  color: var(--gray-700);
   border-bottom: 1px solid var(--gray-200);
   white-space: nowrap;
   vertical-align: bottom;
   height: 55px;
-  background-color: var(--gray-50);
-}
+} */
 
-.task-table td {
+/* .task-table td {
   text-align: left;
   padding: 8px 12px;
   border-bottom: 1px solid var(--gray-100);
   white-space: nowrap;
   height: 40px;
-  background-color: white;
-}
+} */
 
-.task-table tr {
-  background-color: white;
-}
+/* .task-table tr {
+   background-color: white; 
+} */
 
-.task-table tr:hover {
+/* .task-table tr:hover {
   background-color: var(--gray-50);
-}
+} */
 
-.task-row {
+/* .task-row {
   transition: background-color 0.2s;
-}
+} */
 
-.task-row:hover {
+/* .task-row:hover {
   background-color: var(--gray-50);
-}
+} */
 
 .task-row.project {
   font-weight: 600;
@@ -155,61 +150,67 @@ body {
   color: var(--gray-600);
 } */
 
-.expand-button {
-  background: none;
+/* .expand-button {
+  background: #FFFFFF;
   padding: 0 4px;
   margin-right: 8px;
   cursor: pointer;
-  color: var(--gray-500);
+  color: #000000;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border-radius: 5px;
-  border: 1px solid var(--gray-500);
-}
+  border: 1px solid #000000;
+  font-size: 18px;
+} */
 
-.expand-button:hover {
+/* .expand-button:hover {
   color: var(--gray-700);
-}
+} */
 
-.expand-button.expanded {
+/* .expand-button.expanded {
   transform: rotate(0deg);
 }
 
-.chart-container {
+.darkmode-expand-button{
+  background: #121212;
+  color: #FFFFFF;
+  border: 1px solid #FFFFFF;
+} */
+
+/* .darkmode-expand-button:hover{
+  color: #FFFFFF;
+} */
+
+/* .chart-container {
   height: 100%;
   flex: 1;
   overflow-x: hidden;
-  /* overflow-y: hidden; */
   position: relative;
-  background: white;
-}
+} */
 
-.chart-container-1 {
+/* .chart-container-1 {
   height: calc(100% - 80px);
   flex: 1;
-  /* overflow-x: auto; */
-  /* overflow-y: hidden; */
   position: relative;
-  background: white;
-}
+} */
 
-.chart-container svg {
+/* .chart-container svg {
   display: block;
   min-width: 100%;
-}
+} */
 
-.chart-container-1 svg {
+/* .chart-container-1 svg {
   display: block;
   min-width: 100%;
-}
+} */
 
 /* Ensure headers stay fixed while scrolling */
-.header-group {
+/* .header-group {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: white;
-}
+} */
 
 /* Custom scrollbar for better visibility */
 .chart-container::-webkit-scrollbar {
@@ -249,26 +250,31 @@ body {
 }
 
 /* Gantt Chart Headers */
-.year-background, .month-background {
+ /* .year-background, .month-background {
   fill: var(--gray-50);
   stroke: var(--gray-200);
   stroke-width: 1;
 }
 
-.year-label, .month-label {
+.darkmode-year-background, .darkmode-month-background {
+  fill: #121212;
+  stroke: #FFFFFF;
+}  */
+
+/* .year-label, .month-label {
   fill: var(--gray-700);
   font-size: 0.875rem;
   font-weight: 600;
-}
+} */
 
-.year-separator, .month-separator {
+/* .year-separator, .month-separator {
   stroke: var(--gray-200);
   stroke-width: 1;
-}
+} */
 
-.header-group {
+/* .header-group {
   font-family: inherit;
-}
+} */
 
 .year-cell:first-child .year-separator,
 .month-cell:first-child .month-separator {
@@ -276,93 +282,104 @@ body {
 }
 
 /* Ensure text is always visible */
-.year-label, .month-label {
+/* .year-label, .month-label {
   pointer-events: none;
   user-select: none;
-}
+} */
 
 /* Headers */
-.header-group {
+/* .header-group {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: white;
   box-shadow: var(--shadow-sm);
-}
+} */
 
-.header-group text {
+/* .header-group text {
   font-size: 12px;
   fill: var(--gray-700);
   font-weight: 500;
   text-anchor: middle;
   dominant-baseline: central;
   user-select: none;
-}
+} */
 
-.year-header {
-  background: white;
+/* .year-header {
   height: 30px;
-}
+} */
 
-.year-header text {
+/* .year-header text {
   font-size: 14px;
   font-weight: 600;
   fill: var(--gray-900);
-}
+} */
 
-.year-text {
+/* .year-text {
   font-size: 14px !important;
   font-weight: 600 !important;
   fill: var(--gray-900) !important;
-}
+} */
 
-.month-header {
+/* .month-header {
   height: 25px;
-}
+} */
 
-.month-header text {
+/* .month-header text {
   font-size: 13px;
   font-weight: 500;
   fill: var(--gray-800);
-}
+} */
 
-.day-header {
+/* .month-header .darkmode-month-text{
+  fill: #FFFFFF;
+} */
+
+/* .day-header {
   height: 25px;
-}
+} */
 
-.day-header text {
+/* .day-header text {
   font-size: 12px;
   font-weight: 500;
   fill: var(--gray-700);
 }
 
-.header-cell {
+.day-header  .darkmode-day-text{
+  fill: #FFFFFF;
+} */
+
+/* .header-cell {
   fill: var(--gray-50);
   stroke: var(--gray-200);
   stroke-width: 1;
-}
+} */
 
-.year-header .header-cell {
+/* .year-header .header-cell {
   fill: white;
   stroke-width: 1;
-}
+} */
 
-.month-header .header-cell {
+/* .month-header .header-cell {
   fill: var(--gray-50);
-}
+} */
 
-.day-header .header-cell {
+/* .day-header .header-cell {
   fill: white;
-}
+} */
+
+/* .day-header .darkmode-header-cell{
+fill:#121212;
+stroke: var(--gray-200);
+} */
 
 /* Ensure headers are visible */
-.year-header, .month-header, .day-header {
+/* .year-header, .month-header, .day-header {
   pointer-events: none;
-}
+} */
 
-.year-header text, .month-header text, .day-header text {
+/* .year-header text, .month-header text, .day-header text {
   pointer-events: none;
-}
+} */
 
 /* Remove any text decoration */
 text {
@@ -371,12 +388,16 @@ text {
 }
 
 /* Task bars and milestones */
-.bar {
+/* .bar {
   rx: 4px;
   ry: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-}
+} */
+
+/* .darkmode-bar{
+  fill: #FFFFFF;
+} */
 
 .bar.project {
   fill: var(--primary-color);
@@ -412,22 +433,32 @@ text {
   transform: scale(1.2);
 } */
 
-.milestoneDiamond {
+ /* .milestoneDiamond {
   fill: var(--danger-color);
   opacity: 0.8;
   cursor: pointer;
 }
 
-.milestoneDiamond:hover {
-  opacity: 1;
+.milestoneDiamond.base {
+  fill: #4E91FD;
 }
 
+.milestoneDiamond:hover {
+  opacity: 1;
+}  */
+
 /* Grid */
-.grid-line {
+/* .grid-line {
   stroke: var(--gray-100);
   stroke-width: 1;
   stroke-dasharray: 2,2;
 }
+
+.darkmode-grid-line{
+  stroke:#000000;
+  stroke-width: 1;
+  stroke-dasharray: 2,2;
+} */
 
 /* Tooltip */
 .tooltip {
@@ -476,14 +507,16 @@ text {
 .task-table-container::-webkit-scrollbar-thumb,
 .chart-container::-webkit-scrollbar-thumb,
 .chart-container-1::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
+  /* background: var(--gray-300); */
+  background-color: #2596be;
   border-radius: 4px;
 }
 
 .task-table-container::-webkit-scrollbar-thumb:hover,
 .chart-container::-webkit-scrollbar-thumb:hover,
 .chart-container-1::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-400);
+  /* background: var(--gray-400); */
+  background-color: #2596be;
 }
 
 /* Progress bar styles */

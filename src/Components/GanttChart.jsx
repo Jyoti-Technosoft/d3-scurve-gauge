@@ -2,37 +2,275 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const styles = {
-  ganttChart: {
-    margin: "auto",
-    width: "90%",
-    paddingBottom: "5rem"
-  },
-  chartTitle: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    marginTop: "5rem",
-  },
-  dropdownContainer: {
-    margin: "20px 0",
-    display: "flex",
-    justifyContent: "end"
-  },
-  dropdown: {
-    width: "200px",
-    padding: "10px",
-    fontSize: "16px",
-    cursor: "pointer",
-    borderRadius: "5px",
-    outline: "none",
-    transition: "all 0.3s ease",
-    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-  },
-  dropdownOption: {
-    padding: "10px"
-  },
-};
+    ganttChart: {
+      margin: "auto",
+      width: "90%",
+      paddingBottom: "5rem"
+    },
+    chartTitle: {
+      fontSize: "24px",
+      fontWeight: "bold",
+      marginTop: "5rem",
+    },
+    legendFilter: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    },
+    legends: {
+      display: "flex",
+      justifyContent: "center",
+      gap: "20px",
+    },
+    legend: {
+      display: "flex",
+      alignItems: "center",
+      fontSize: "14px",
+    },
+    legendIcon: {
+      width: "16px",
+      height: "16px",
+      marginRight: "5px",
+      display: "inline-block",
+      borderRadius: "4px",
+    },
+    legendIconPlanned: {
+      backgroundColor: "steelblue",
+      opacity: "0.7",
+    },
+    legendIconActual: {
+      backgroundColor: "red",
+      opacity: "0.7",
+    },
+    dropdownContainer: {
+      margin: "20px 0",
+      display: "flex",
+      justifyContent: "end"
+    },
+    dropdown: {
+      width: "200px",
+      padding: "10px",
+      fontSize: "16px",
+      cursor: "pointer",
+      borderRadius: "5px",
+      outline: "none",
+      transition: "all 0.3s ease",
+      boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+    },
+    dropdownOption: {
+      padding: "10px"
+    },
+    ganttChartContainer: {
+      display: "flex",
+      margin: "20px",
+      height: "450px",
+      maxHeight: "450px",
+      border: "1px solid var(--gray-200)",
+      borderRadius: "8px",
+      boxShadow: "var(--shadow-md)"
+    },
+    taskTableContainer:{
+      overflowY: "auto",
+      height: "100%",
+      maxWidth: "80%",
+      borderRight: "1px solid var(--gray-200)",
+      minWidth:"200px"
+    },
+    splitBar: {
+      width: "5px", /* Thickness of the split bar */
+      /* background: #ccc; Visual appearance */
+      cursor: "ew-resize", /* Resizing cursor */
+      position: "relative",
+      zIndex: 1,
+    },
+    taskTable: {
+      width: "100%",
+      borderCollapse: "collapse",
+      fontSize: "0.875rem"
+    },
+    taskTable_head:{
+      position: "sticky",
+      top: 0,
+      background: "var(--gray-50)",
+      zIndex: 10,
+      height: "55px"
+    },
+    taskTable_darkmode_thead:{
+      background: "#121212"
+    },
+    taskTable_th:{
+      padding: "12px",
+      textAlign: "left",
+      fontWeight: 600,
+      borderBottom: "1px solid var(--gray-200)",
+      whiteSpace: "nowrap",
+      verticalAlign: "bottom",
+      height: "55px"
+    },
+    taskTable_td:{
+      textAlign: "left",
+      padding: "8px 12px",
+      borderBottom: "1px solid var(--gray-100)",
+      whiteSpace: "nowrap",
+      height: "40px"
+    },
+    taskTable_tr:{
+      "&:hover":{
+        backgroundColor: "var(--gray-50)"
+      }
+    },
+    taskRow:{
+      transition: "background-color 0.2s"
+    },
+    expandButton:{
+      background: "#FFFFFF",
+      // padding:"8px 8px",
+      marginRight: "8px",
+      cursor: "pointer",
+      color: "#000000",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: "5px",
+      border: "1px solid #000000",
+      fontSize: "18px",
+      width: '18px',
+      height: '16px', 
+      verticalAlign: 'middle'
+    },
+    expanded:{
+      transform: "rotate(0deg)",
+    },
+    darkmode_expand_button:{
+      background: "#121212",
+      color: "#FFFFFF",
+      border: "1px solid #FFFFFF"
+    },
+    chartContainer:{
+      height: "100%",
+      flex: 1,
+      overflowX: "hidden",
+      position: "relative",
+    },
+    chart_container_svg: {
+      display: "block",
+      minWidth:"100%"
+    },
+    chartContainer_1 :{
+      height: "calc(100% - 80px)",
+      flex: 1,
+      position: "relative"
+    },
+    chartContainer_1_svg:{
+      display: "block",
+      minWidth: "100%"
+    },
+    header_group:{
+      position: "sticky",
+      top: 0,
+      zIndex: 2,
+      fontFamily: "inherit",
+      boxShadow: "var(--shadow-sm)",
+    },
+    month_background: {
+      fill: "var(--gray-50)",
+      stroke: "var(--gray-200)",
+      strokeWidth: 1
+    },
+    darkmode_month_background: {
+      fill: "#121212",
+      stroke: "#FFFFFF",
+      strokeWidth: 1
+    },
+    month_label:{
+      fill: "var(--gray-700)",
+      fontSize: "0.875rem",
+      fontWeight: 600,
+      pointerEvents: "none",
+      userSelect: "none",
+      textAnchor: "middle",
+      dominantBaseline: "central"
+    },
+    darkmode_month_text:{
+      fill: "#FFFFFF"
+    },
+    month_separator:{
+      stroke: "var(--gray-200)",
+      strokeWidth: 1
+    },
+    year_header: {
+      height: "30px",
+      fill: "white",
+      stroke: "var(--gray-200)",
+      strokeWidth: 1,
+      pointerEvents: "none"
+    },
+    year_header_text:{
+      fontSize: "14px",
+      fontWeight: 600,
+      fill: "var(--gray-900)",
+      pointerEvents: "none"
+    },
+    month_header:{
+      height: "25px",
+      fill: "var(--gray-50)",
+      pointerEvents: "none"
+    },
+    day_header:{
+      height: "25px",
+    },
+    day_header_text:{
+      fontSize: "12px",
+      fontWeight: 500,
+      fill: "var(--gray-700)",
+      textAnchor: "middle",
+      dominantBaseline: "central",
+      pointerEvents: "none"
+    },
+    darkmode_day_header_text:{
+      fill: "#FFFFFF",
+    },
+    headerCell:{
+      fill:"var(--gray-50)",
+      stroke: "var(--gray-200)",
+      strokeWidth: 1
+    },
+    day_header_cell:{
+      fill: "white",
+      pointerEvents: "none"
+    },
+    darkmode_day_header_cell :{
+      fill:"#121212",
+      stroke: "var(--gray-200)"
+    },
+    bar:{
+      rx: "4px",
+      ry: "4px",
+      cursor: "pointer",
+      transition: "all 0.2s ease"
+    },
+    darkmode_bar:{
+      fill: "#FFFFFF"
+    },
+    grid_line:{
+      stroke:"var(--gray-100)",
+      strokeWidth: 1,
+      strokeDasharray: "2,2"
+    },
+    darkmode_grid_line:{
+      stroke:"#000000"
+    },
+    milestoneDiamond: {
+      fill: "var(--danger-color)",
+      opacity: 1,
+      cursor: "pointer"
+    },
+    base:{
+      fill: "#4E91FD"
+    }
+  };
 
-const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked }) => {
+const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked,isDarkMode }) => {
   const renderTask = (task, level = 0) => {
     const isExpanded = expandedTasks.includes(task.objectId);
     const hasChildren = task.children && task.children.length > 0;
@@ -44,12 +282,13 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
 
     return (
       <React.Fragment key={task.objectId}>
-        <tr className={`task-row ${task.type}`}>
-          <td style={{ paddingLeft: `${level * 20}px` }} onClick={()=> showTaskTable(task)}>
+        <tr style={{...styles.taskRow}} className={`task-row ${task.type}`}>
+          <td style={{...styles.taskTable_td,fontWeight:`${task.type == "WBS" ?"600":"normal"} `, paddingLeft: `${(level * 20) + 10}px`, cursor: 'pointer' }} onClick={()=> showTaskTable(task)}>
             {hasChildren && (
               <button 
-                className={`expand-button ${isExpanded ? 'expanded' : ''}`}
-                style={{ width: '18px', height: '16px', verticalAlign: 'middle' }}
+              style={{padding:`${isExpanded?"4px 8px 6px":"8px 8px"}`,...styles.expandButton,...styles.expanded,...(isDarkMode ? styles.darkmode_expand_button : {})}}
+                // className={`expand-button ${isExpanded ? 'expanded' : ''} ${isDarkMode ? 'darkmode-expand-button' : ''}`}
+                // style={{ width: '18px', height: '16px', verticalAlign: 'middle' }}
                 onClick={() => onToggleExpand(task.objectId)}
               >
                 {isExpanded ? '-' : '+'}
@@ -83,10 +322,10 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
 
   return (
     // <div className="" style={{ width: "100%" }}>
-      <table className="task-table">
-        <thead>
+      <table style={styles.taskTable} className="task-table">
+        <thead style={{...styles.taskTable_head,...(isDarkMode ? styles.taskTable_darkmode_thead : {})}}>
           <tr>
-            <th>Task Name</th>
+            <th style={styles.taskTable_th}>Task Name</th>
             {/* <th>Type</th>
             <th>Start Date</th>
             <th>End Date</th>
@@ -105,7 +344,7 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
   );
 };
 
-const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }) => {
+const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,isDarkMode }) => {
     const [timeInterval, setTimeInterval] = useState("daily");
   const svgRef = useRef();
   const headerSvgRef = useRef();
@@ -118,6 +357,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
   const [task, setTask] = useState();
   const [expandedSubTasks, setExpandedSubTasks] = useState({}); // State to track which tasks are expanded
 
+  const [maxWidth, setMaxWidth] = useState("80%");
+  
   const showTaskTable = (task) => {
     setTask(task);
     setIsTaskClicked(true);
@@ -162,6 +403,12 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     return result;
   };
 
+  const styleToString = (styleObject) =>
+    Object.entries(styleObject)
+      .map(([key, value]) => `${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}: ${value};`)
+      .join(" ");
+
+      
   const handleToggleExpand = (taskId) => {
     setExpandedTasks(prev => 
       prev.includes(taskId)
@@ -199,7 +446,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     const endDate = d3.max(flatTasks, d => d.finishDate);
     const totalDays = d3.timeDay.count(startDate, endDate);
     const minChartWidth = totalDays * minDayWidth;
-    
+     
     // Calculate container width
     const containerWidth = document.querySelector('.chart-container-1').clientWidth;
     const chartWidth = Math.max(minChartWidth, containerWidth);
@@ -230,6 +477,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     const headerGroup = headerSvg.append('g')
       .attr('class', 'header-group')
       // .attr('transform', `translate(${margin.left},0)`);
+      .attr('style', styleToString(styles.header_group))
       .attr('transform', `translate(-25,0)`);
 
     // Create chart group with proper offset
@@ -248,6 +496,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     const years = d3.timeYear.range(startOfFirstYear, endDate);
     headerGroup.append('g')
       .attr('class', 'year-header')
+      .attr('style',styleToString(styles.year_header))
       .selectAll('.year-cell')
       .data(years)
       .enter()
@@ -265,8 +514,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
           .attr('y', 0)
           .attr('width', yearWidth)
           .attr('height', headerHeights.year)
-          .attr('class', 'year-background');
-
+          // .attr('class', isDarkMode?'darkmode-year-background':'year-background');
         // Add year text centered in the visible area
         year.append('text')
           .attr('x', function() {
@@ -291,6 +539,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     const months = d3.timeMonth.range(startOfFirstMonth, endDate);
     headerGroup.append('g')
       .attr('class', 'month-header')
+      .attr('style',styleToString(styles.month_header))
       .attr('transform', `translate(0,${headerHeights.year})`)
       .selectAll('.month-cell')
       .data(months)
@@ -308,8 +557,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
           .attr('y', 0)
           .attr('width', monthWidth)
           .attr('height', headerHeights.month)
-          .attr('class', 'month-background');
-
+          // .attr('class', isDarkMode?'darkmode-month-background':'month-background')
+          .attr('style', styleToString(isDarkMode ? (styles.darkmode_month_background) : styles.month_background))
         // Add month text centered
         month.append('text')
           .attr('x', function() {
@@ -323,7 +572,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
 
         // Add separator line
         month.append('line')
-          .attr('class', 'month-separator')
+          // .attr('class', 'month-separator')
+          .attr('style',  styleToString(styles.month_separator))
           .attr('x1', monthStart)
           .attr('x2', monthStart)
           .attr('y1', 0)
@@ -333,7 +583,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     // Add day headers with increased minimum width
     const days = d3.timeDay.range(...timeScale.domain());
     headerGroup.append('g')
-      .attr('class', 'day-header')
+      .attr('class','day-header')
+      .attr('style',styleToString(styles.day_header))
       .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
       .selectAll('.day-cell')
       .data(days)
@@ -351,41 +602,100 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
           .attr('y', 0)
           .attr('width', dayWidth)
           .attr('height', headerHeights.day)
-          .attr('class', 'header-cell');
-        
+          // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
+          .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
         g.append('text')
           .attr('x', dayStart + (dayWidth / 2))
           .attr('y', headerHeights.day / 2)
           .attr('dy', '.1em')
-          .text(d3.timeFormat('%d')(d));
-      });
+          .text(d3.timeFormat('%d')(d))
+          // .attr('class', isDarkMode?'darkmode-day-text':'');
+          .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+        });
 
     // Add bars and milestones with proper vertical positioning
     flatTasks.forEach((task, index) => {
       const rowY = index * rowHeight; // Exact row position
       
       if (task.type === 'milestone') {
-        const x = timeScale(task.startDate);
-        const y = rowY + (rowHeight / 2); // Center of row
-        const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+        if (task.BL_milestoneActivityStartDate) {
+          const x = timeScale(task.BL_milestoneActivityStartDate);
+          const y = rowY + (rowHeight / 2); // Center of row
+          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+          
+          chartGroup.append('path')
+            // .attr('class', 'milestoneDiamond base')
+            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+            .attr('d', d3.symbol()
+              .type(d3.symbolDiamond)
+              .size(milestoneSize))
+            .attr('transform', `translate(${x - 30}, ${y})`)
+            .attr('data-task-id', task.objectId);
+        } 
+        if (task.BL_milestoneActivityFinishDate) {
+          const x = timeScale(task.BL_milestoneActivityFinishDate);
+          const y = rowY + (rowHeight / 2); // Center of row
+          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+          
+          chartGroup.append('path')
+            // .attr('class', 'milestoneDiamond base')
+            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+            .attr('d', d3.symbol()
+              .type(d3.symbolDiamond)
+              .size(milestoneSize))
+            .attr('transform', `translate(${x - 30}, ${y})`)
+            .attr('data-task-id', task.objectId);
+        }
+        if (task.UP_milestoneActivityStartDate) {
+          const x = timeScale(task.UP_milestoneActivityStartDate);
+          const y = rowY + (rowHeight / 2); // Center of row
+          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+          
+          chartGroup.append('path')
+            // .attr('class', 'milestoneDiamond')
+            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+            .attr('d', d3.symbol()
+              .type(d3.symbolDiamond)
+              .size(milestoneSize))
+            .attr('transform', `translate(${x - 30}, ${y})`)
+            .attr('data-task-id', task.objectId);
+        }
+        if (task.UP_milestoneActivityFinishDate) {
+          const x = timeScale(task.UP_milestoneActivityFinishDate);
+          const y = rowY + (rowHeight / 2); // Center of row
+          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+          
+          chartGroup.append('path')
+            // .attr('class', 'milestoneDiamond')
+            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+            .attr('d', d3.symbol()
+              .type(d3.symbolDiamond)
+              .size(milestoneSize))
+            .attr('transform', `translate(${x - 30}, ${y})`)
+            .attr('data-task-id', task.objectId);
+        }
+        // const x = timeScale(task.startDate);
+        // const y = rowY + (rowHeight / 2); // Center of row
+        // const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
         
-        chartGroup.append('path')
-          .attr('class', 'milestoneDiamond')
-          .attr('d', d3.symbol()
-            .type(d3.symbolDiamond)
-            .size(milestoneSize))
-          .attr('transform', `translate(${x+20}, ${y})`)
-          .attr('data-task-id', task.id);
+        // chartGroup.append('path')
+        //   .attr('class', 'milestoneDiamond')
+        //   .attr('d', d3.symbol()
+        //     .type(d3.symbolDiamond)
+        //     .size(milestoneSize))
+        //   .attr('transform', `translate(${x - 30}, ${y})`)
+        //   .attr('data-task-id', task.objectId);
       } else {
-        chartGroup.append('rect')
-          .attr('class', `bar ${task.type}`)
-          .attr('y', rowY + verticalPadding)
-          .attr('x', timeScale(task.startDate))
-          .attr('height', barHeight)
-          .attr('width', Math.max(timeScale(task.finishDate) - timeScale(task.startDate), 1))
-          .attr('rx', 3)
-          .attr('ry', 3)
-          .attr('data-task-id', task.objectId);
+        // chartGroup.append('rect')
+        //   .attr('class', `${isDarkMode?'darkmode-bar':'bar'} ${task.type}`)
+        // .attr('style', styleToString(Object.assign({}, styles.bar, isDarkMode ? styles.darkmode_bar : {})));
+        //   .attr('y', rowY + verticalPadding)
+        //   .attr('x', timeScale(task.startDate))
+        //   .attr('height', barHeight)
+        //   .attr('width', Math.max(timeScale(task.finishDate) - timeScale(task.startDate), 1))
+        //   .attr('rx', 3)
+        //   .attr('ry', 3)
+        //   .attr('data-task-id', task.objectId);
       }
     });
 
@@ -395,8 +705,9 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
 
     d3.timeDay.range(...timeScale.domain()).forEach(date => {
       gridLines.append('line')
-        .attr('class', 'grid-line')
-        .attr('x1', timeScale(date))
+        .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
+        // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+        .attr('x1', timeScale(date) + 15)
         .attr('x2', timeScale(date))
         .attr('y1', 0)
         .attr('y2', chartHeight);
@@ -418,44 +729,20 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     };
 
     svg.selectAll('.bar, .milestoneDiamond')
-      .on('mouseover', (event) => {
-        const task = findTaskByElement(event.target);
+    // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+    .on('mouseover', (event) => {
+      const task = findTaskByElement(event.target);
+      
+      if (task) {
+        clearTimeout(tooltipTimeout);
         
-        if (task) {
-          clearTimeout(tooltipTimeout);
-          
-          const tooltipContent = `
-            <strong>${task.name}</strong><br/>
-            <span class="tooltip-label">Type:</span> ${task.type}<br/>
-            <span class="tooltip-label">Start:</span> ${task.startDate.toLocaleDateString()}<br/>
-            <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.finishDate.toLocaleDateString()}
-            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
-          `;
+        const tooltipContent = `
+          <strong>${task.name}</strong><br/>
+          <span class="tooltip-label">Start:</span> ${task.UP_milestoneActivityStartDate ? task.UP_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
+          <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate ? task.UP_milestoneActivityFinishDate.toLocaleDateString() : '-'}
+          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+        `;
 
-          const tooltipWidth = 200;
-          const tooltipHeight = 100;
-          
-          let left = event.pageX + 10;
-          let top = event.pageY - 10;
-          
-          if (left + tooltipWidth > window.innerWidth) {
-            left = event.pageX - tooltipWidth - 10;
-          }
-          
-          if (top + tooltipHeight > window.innerHeight) {
-            top = event.pageY - tooltipHeight - 10;
-          }
-
-          tooltip
-            .html(tooltipContent)
-            .style('left', `${left}px`)
-            .style('top', `${top}px`)
-            .transition()
-            .duration(200)
-            .style('opacity', 1);
-        }
-      })
-      .on('mousemove', (event) => {
         const tooltipWidth = 200;
         const tooltipHeight = 100;
         
@@ -471,16 +758,104 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
         }
 
         tooltip
+          .html(tooltipContent)
           .style('left', `${left}px`)
-          .style('top', `${top}px`);
-      })
-      .on('mouseout', () => {
-        tooltipTimeout = setTimeout(() => {
-          tooltip.transition()
-            .duration(200)
-            .style('opacity', 0);
-        }, 100);
-      });
+          .style('top', `${top}px`)
+          .transition()
+          .duration(200)
+          .style('opacity', 1);
+      }
+    })
+    .on('mousemove', (event) => {
+      const tooltipWidth = 200;
+      const tooltipHeight = 100;
+      
+      let left = event.pageX + 10;
+      let top = event.pageY - 10;
+      
+      if (left + tooltipWidth > window.innerWidth) {
+        left = event.pageX - tooltipWidth - 10;
+      }
+      
+      if (top + tooltipHeight > window.innerHeight) {
+        top = event.pageY - tooltipHeight - 10;
+      }
+
+      tooltip
+        .style('left', `${left}px`)
+        .style('top', `${top}px`);
+    })
+    .on('mouseout', () => {
+      tooltipTimeout = setTimeout(() => {
+        tooltip.transition()
+          .duration(200)
+          .style('opacity', 0);
+      }, 100);
+    });
+
+    svg.selectAll('.bar, .milestoneDiamond .base')
+    .on('mouseover', (event) => {
+      const task = findTaskByElement(event.target);
+      
+      if (task) {
+        clearTimeout(tooltipTimeout);
+        
+        const tooltipContent = `
+          <strong>${task.name}</strong><br/>
+          <span class="tooltip-label">Start:</span> ${task.BL_milestoneActivityStartDate ? task.BL_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
+          <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.BL_milestoneActivityFinishDate ? task.BL_milestoneActivityFinishDate.toLocaleDateString() : '-'}
+          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+        `;
+
+        const tooltipWidth = 200;
+        const tooltipHeight = 100;
+        
+        let left = event.pageX + 10;
+        let top = event.pageY - 10;
+        
+        if (left + tooltipWidth > window.innerWidth) {
+          left = event.pageX - tooltipWidth - 10;
+        }
+        
+        if (top + tooltipHeight > window.innerHeight) {
+          top = event.pageY - tooltipHeight - 10;
+        }
+
+        tooltip
+          .html(tooltipContent)
+          .style('left', `${left}px`)
+          .style('top', `${top}px`)
+          .transition()
+          .duration(200)
+          .style('opacity', 1);
+      }
+    })
+    .on('mousemove', (event) => {
+      const tooltipWidth = 200;
+      const tooltipHeight = 100;
+      
+      let left = event.pageX + 10;
+      let top = event.pageY - 10;
+      
+      if (left + tooltipWidth > window.innerWidth) {
+        left = event.pageX - tooltipWidth - 10;
+      }
+      
+      if (top + tooltipHeight > window.innerHeight) {
+        top = event.pageY - tooltipHeight - 10;
+      }
+
+      tooltip
+        .style('left', `${left}px`)
+        .style('top', `${top}px`);
+    })
+    .on('mouseout', () => {
+      tooltipTimeout = setTimeout(() => {
+        tooltip.transition()
+          .duration(200)
+          .style('opacity', 0);
+      }, 100);
+    });
 
     // Clean up tooltip when component unmounts
     return () => {
@@ -512,9 +887,9 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
 
   const handleScroll = (source, target) => {
     const sourceScrollTop = source.scrollTop;
-    const sourceScrollLeft = source.scrollLeft;
+    // const sourceScrollLeft = source.scrollLeft;
     target.scrollTop = sourceScrollTop;
-    target.scrollLeft = sourceScrollLeft;
+    // target.scrollLeft = sourceScrollLeft;
   };
 
   const handleHorizontalScroll = (source, target) => {
@@ -541,7 +916,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
     return (
       <>
         <tr>
-          <td>
+          <td style={styles.taskTable_td}>
             {task.children.length > 0 && (
               <span
                 onClick={() => toggleExpandCollapse(task.objectId)}
@@ -551,11 +926,11 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
               </span>
             )}
           </td>
-          <td>{task.code}</td>
-          <td>{task.name}</td>
-          <td>{task.projectType}</td>
-          <td>{getFormattedDate(task.startDate)}</td>
-          <td>{getFormattedDate(task.finishDate)}</td>
+          <td style={styles.taskTable_td}>{task.code}</td>
+          <td style={styles.taskTable_td}>{task.name}</td>
+          <td style={styles.taskTable_td}>{task.projectType}</td>
+          <td style={styles.taskTable_td}>{getFormattedDate(task.startDate)}</td>
+          <td style={styles.taskTable_td}>{getFormattedDate(task.finishDate)}</td>
         </tr>
         {isExpanded && task.children.length > 0 && (
               <table>
@@ -595,42 +970,43 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData }
               <option style={styles.dropdownOption} value="monthly">Monthly</option>
             </select>
         </div>
-        <div className="gantt-chart-container">
-            <div className="task-table-container" ref={taskTableRef} style={{ minWidth: "200px", maxWidth: "80%" }} onScroll={() =>
+        <div style={styles.ganttChartContainer}>
+            <div style={styles.taskTableContainer} className='task-table-container' ref={taskTableRef} onScroll={() =>
           handleScroll(taskTableRef.current, chartContainerRef.current)
         }>
-                <TaskTable 
+                <TaskTable
                     tasks={tasks} 
                     expandedTasks={expandedTasks}
                     onToggleExpand={handleToggleExpand}
                     showTaskTable={showTaskTable}
                     isTaskClicked={isTaskClicked}
+                    isDarkMode={isDarkMode}
                 />
             </div>
-            <div className="split-bar" ref={splitBarRef} onMouseDown={startDragging} ></div>
-            <div className="chart-container">
+            <div style={styles.splitBar} ref={splitBarRef} onMouseDown={startDragging} ></div>
+            <div style={styles.chartContainer} className="chart-container">
               <div className='hidden-scrollbar' style={{ overflowX: "auto", overflowY: "hidden" }} ref={headerContainerRef} onScroll={() =>
                   handleHorizontalScroll(headerContainerRef.current, chartContainerRef.current)
                 }>
-                <svg ref={headerSvgRef}></svg>
+                <svg style={styles.chart_container_svg} ref={headerSvgRef}></svg>
               </div>
-              <div className="chart-container-1" ref={chartContainerRef} onScroll={(event) =>
-                {handleScroll(chartContainerRef.current, taskTableRef.current); handleScroll(chartContainerRef.current, headerContainerRef.current);}
+              <div style={styles.chartContainer_1} className="chart-container-1" ref={chartContainerRef} onScroll={(event) =>
+                {handleScroll(chartContainerRef.current, taskTableRef.current); handleHorizontalScroll(chartContainerRef.current, headerContainerRef.current);}
               }>
-                  <svg ref={svgRef}></svg>
+                  <svg style={styles.chartContainer_1_svg} ref={svgRef}></svg>
               </div>
             </div>
         </div>
         {isTaskClicked && (
-          <table className="task-table">
-            <thead>
+          <table style={styles.taskTable} className="task-table">
+            <thead style={{...styles.taskTable_head,...(isDarkMode ? styles.taskTable_darkmode_thead : {})}}>
               <tr>
                 <th></th>
-                <th>Task Code</th>
-                <th>Task Name</th>
-                <th>Project Type</th>
-                <th>Start Date</th>
-                <th>Finish Date</th>
+                <th style={styles.taskTable_th}>Task Code</th>
+                <th style={styles.taskTable_th}>Task Name</th>
+                <th style={styles.taskTable_th}>Project Type</th>
+                <th style={styles.taskTable_th}>Start Date</th>
+                <th style={styles.taskTable_th}>Finish Date</th>
               </tr>
             </thead>
             <tbody>

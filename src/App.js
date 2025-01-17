@@ -19,35 +19,168 @@ function App() {
   let tasks = [];
 
   const preparedTasks = () => {
-    const map = new Map(); // Map to store objects by their `objectId`
-    const result = []; // Final hierarchical list
-
-    // Step 1: Add all objects to the map and initialize `childrens` array
+    const map = new Map();
+    const mapItem = new Map(); // Keeps track of milestones grouped by WBS Object IDs
+    const result = [];
+    // Step 1: Add all WBS objects to the map and initialize `children` array
     wbsData.forEach(item => {
-        map.set(item.objectId, { ...item, children: [], 
-          startDate: new Date(item.startDate), finishDate: new Date(item.finishDate),
-          // start: new Date(item.startDate), end: new Date(item.finishDate) 
+      map.set(item.objectId, {
+        ...item,
+        children: [],
+        startDate: new Date(item.startDate),
+        finishDate: new Date(item.finishDate),
+        type: "WBS",
+      });
+    });
+
+    const groupedMilestones = {};
+    // Iterate over each milestone
+    blMilestoneActivity.forEach(milestone => {
+      const { wbsId, name } = milestone;
+      // Initialize the outer object if it doesn't exist
+      if (!groupedMilestones[wbsId]) {
+        groupedMilestones[wbsId] = {};
+      }
+
+      // Initialize the inner object if it doesn't exist
+      if (!groupedMilestones[wbsId][name]) {
+        groupedMilestones[wbsId][name] = [];
+      }
+
+      // Push the milestone object into the appropriate array
+      if (groupedMilestones[wbsId][name].length == 0) {
+        groupedMilestones[wbsId][name].push({
+          ...milestone,
+          type: "milestone",
+          children: [],
+          startDate: new Date(milestone.startDate),
+          finishDate: new Date(milestone.finishDate),
+          BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+          BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
         });
+      } else {
+        groupedMilestones[wbsId][name][0] = {
+          ...milestone,
+          ...groupedMilestones[wbsId][name][0],
+          type: "milestone",
+          children: [],
+          BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+          BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+        };
+      }
+    });
+    // Iterate over each milestone
+    upMilestoneActivity.forEach(milestone => {
+      const { wbsId, name } = milestone;
+
+      // Initialize the outer object if it doesn't exist
+      if (!groupedMilestones[wbsId]) {
+        groupedMilestones[wbsId] = {};
+      }
+
+      // Initialize the inner object if it doesn't exist
+      if (!groupedMilestones[wbsId][name]) {
+        groupedMilestones[wbsId][name] = [];
+      }
+
+      // Push the milestone object into the appropriate array
+      if (groupedMilestones[wbsId][name].length == 0) {
+        groupedMilestones[wbsId][name].push({
+          ...milestone,
+          type: "milestone",
+          children: [],
+          UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+          UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+        });
+      } else {
+        groupedMilestones[wbsId][name][0] = {
+          ...milestone,
+          ...groupedMilestones[wbsId][name][0],
+          children: [],
+          UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+          UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+        };
+      }
+    });
+    console.log("Final mapItem with all milestones:", groupedMilestones);
+    // Step 4: Build the hierarchy
+    wbsData.forEach(item => {
+      if (item.parentObjectId === null) {
+          // Top-level WBS (no parent)
+          result.push({ ...map.get(item.objectId), type: "WBS" });
+      } else {
+          // Child WBS: find its parent and add it to the `children` array
+          const parent = map.get(item.parentObjectId);
+          if (parent) {
+              parent.children.push(map.get(item.objectId));
+          }
+      }
     });
 
-    // Step 2: Build the hierarchy
-    wbsData.forEach(item => {
-        if (item.parentObjectId === null) {
-            // Top-level WBS (no parent)
-            result.push({ ...map.get(item.objectId), type: "WBS" });
-        } else {
-            // Child WBS: find its parent and add it to the `children` array
-            const parent = map.get(item.parentObjectId);
-            if (parent) {
-                parent.children.push(map.get(item.objectId));
-            }
-        }
-    });
+    // if (groupedMilestones[item.code]) {
+    //   // children = children.concat(Object.values(groupedMilestones[item.code])[0]);
+    //   // console.log("FOUND VALUE ===>", children);
+    // }
+    console.log("GROUPED ===>", mapNewMilestones(result, groupedMilestones));
+
     console.log("DATA ==> ", result)
+    // wbsData.forEach(item => {
+    //   const enrichedItem = map.get(item.objectId);
+    //   enrichedItem.milestones = mapItem.get(item.objectId) || []; // Add milestones if any
+    //   if (item.parentObjectId === null) {
+    //     // Top-level WBS (no parent)
+    //     result.push(enrichedItem);
+    //   } else {
+    //     // Child WBS: find its parent and add it to the `children` array
+    //     const parent = map.get(item.parentObjectId);
+    //     if (parent) {
+    //       parent.children.push(enrichedItem);
+    //     }
+    //   }
+    // });
+    // console.log("Final WBS hierarchy with milestones:", result);
     tasks = result;
     return result;
   }
+
+  // Recursive function to traverse and map new milestones
+function mapNewMilestones(existingList, newMilestones) {
+  existingList.forEach(item => {
+      // Check if the item has children
+      if (item.children && item.children.length > 0) {
+          item.children.forEach(child => {
+              // Check if the child's code matches any key in newMilestones
+              if (newMilestones[child.code]) {
+                  // Map the new milestones to the child
+                  const milestoneEntries = newMilestones[child.code];
+                  Object.values(milestoneEntries).forEach(milestone => {
+                    child.children = child.children.concat(milestone);
+                  });
+                  // for (const milestoneName in milestoneEntries) {
+                  //     if (milestoneEntries.hasOwnProperty(milestoneName)) {
+                  //         child.children.push(milestoneEntries[milestoneName]);
+                  //     }
+                  // }
+              }
+              // Recursively check for children of the current child
+              mapNewMilestones(child.children, newMilestones);
+          });
+      } else if (newMilestones[item.code]) {
+        let children = [];
+        Object.values(newMilestones[item.code]).forEach(milestone => {
+          children = children.concat(milestone);
+        });
+        item.children = children;
+        // console.log("VALUES ===> ", Object.values(newMilestones[item.code]))
+      }
+  });
+}
+
+// Call the function to map new milestones
   preparedTasks();
+  
+
+  // preparedTasks();
 
   // const tasks = [
   //   {
@@ -227,7 +360,7 @@ function App() {
           {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         </button>
       </div>
-      <GanttChart tasks={tasks} blMilestoneActivity={blMilestoneActivity} upMilestoneActivity={upMilestoneActivity} wbsData={wbsData} />
+      <GanttChart isDarkMode={isDarkMode} tasks={tasks} blMilestoneActivity={blMilestoneActivity} upMilestoneActivity={upMilestoneActivity} wbsData={wbsData} />
       <Dashboard isDarkMode={isDarkMode} projectInfoData={projectInfoData}/>
       <SCurveChart 
         isDarkMode={isDarkMode}
