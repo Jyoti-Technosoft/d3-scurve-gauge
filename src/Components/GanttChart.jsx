@@ -624,7 +624,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
           
           chartGroup.append('path')
-            // .attr('class', 'milestoneDiamond base')
+            .attr('class', 'milestoneDiamond base')
             .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
             .attr('d', d3.symbol()
               .type(d3.symbolDiamond)
@@ -638,7 +638,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
           
           chartGroup.append('path')
-            // .attr('class', 'milestoneDiamond base')
+            .attr('class', 'milestoneDiamond base')
             .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
             .attr('d', d3.symbol()
               .type(d3.symbolDiamond)
@@ -652,7 +652,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
           
           chartGroup.append('path')
-            // .attr('class', 'milestoneDiamond')
+            .attr('class', 'milestoneDiamond')
             .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
             .attr('d', d3.symbol()
               .type(d3.symbolDiamond)
@@ -666,7 +666,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
           
           chartGroup.append('path')
-            // .attr('class', 'milestoneDiamond')
+            .attr('class', 'milestoneDiamond')
             .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
             .attr('d', d3.symbol()
               .type(d3.symbolDiamond)
@@ -793,7 +793,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
       }, 100);
     });
 
-    svg.selectAll('.bar, .milestoneDiamond .base')
+    svg.selectAll('.bar, .milestoneDiamond.base')
     .on('mouseover', (event) => {
       const task = findTaskByElement(event.target);
       
