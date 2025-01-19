@@ -356,8 +356,106 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
   const [isTaskClicked, setIsTaskClicked] = useState(false);
   const [task, setTask] = useState();
   const [expandedSubTasks, setExpandedSubTasks] = useState({}); // State to track which tasks are expanded
-
   const [maxWidth, setMaxWidth] = useState("80%");
+
+  var addToDate = function addToDate(date, quantity, scale) {
+    var newDate = new Date(date.getFullYear() + (scale === "year" ? quantity : 0), date.getMonth() + (scale === "month" ? quantity : 0), date.getDate() + (scale === "day" ? quantity : 0), date.getHours() + (scale === "hour" ? quantity : 0), date.getMinutes() + (scale === "minute" ? quantity : 0), date.getSeconds() + (scale === "second" ? quantity : 0), date.getMilliseconds() + (scale === "millisecond" ? quantity : 0));
+    return newDate;
+  };
+  var startOfDate = function startOfDate(date, scale) {
+    var scores = ["millisecond", "second", "minute", "hour", "day", "month", "year"];
+  
+  
+    var shouldReset = function shouldReset(_scale) {
+      var maxScore = scores.indexOf(scale);
+      return scores.indexOf(_scale) <= maxScore;
+    };
+  
+  
+    var newDate = new Date(date.getFullYear(), shouldReset("year") ? 0 : date.getMonth(), shouldReset("month") ? 1 : date.getDate(), shouldReset("day") ? 0 : date.getHours(), shouldReset("hour") ? 0 : date.getMinutes(), shouldReset("minute") ? 0 : date.getSeconds(), shouldReset("second") ? 0 : date.getMilliseconds());
+    return newDate;
+  };
+
+  const getMonday = (date) => {
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(date.setDate(diff));
+  };
+  
+  
+  const ganttDateRange = (
+    tasks,
+    viewMode,
+    preStepsCount
+  ) => {
+    let newStartDate = tasks[0].startDate;
+    let newEndDate = tasks[0].startDate;
+    for (const task of tasks) {
+      if (task.startDate < newStartDate) {
+        newStartDate = task.startDate;
+      }
+      if (task.finishDate > newEndDate) {
+        newEndDate = task.finishDate;
+      }
+    }
+    switch (viewMode) {
+      case "yearly":
+        newStartDate = addToDate(newStartDate, -1, "year");
+        newStartDate = startOfDate(newStartDate, "year");
+        newEndDate = addToDate(newEndDate, 1, "year");
+        newEndDate = startOfDate(newEndDate, "year");
+        break;
+      case "":
+        newStartDate = addToDate(newStartDate, -3, "month");
+        newStartDate = startOfDate(newStartDate, "month");
+        newEndDate = addToDate(newEndDate, 3, "year");
+        newEndDate = startOfDate(newEndDate, "year");
+        break;
+      case "monthly":
+        newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
+        newStartDate = startOfDate(newStartDate, "month");
+        newEndDate = addToDate(newEndDate, 1, "year");
+        newEndDate = startOfDate(newEndDate, "year");
+        break;
+      case "weekly":
+        newStartDate = startOfDate(newStartDate, "day");
+        newStartDate = addToDate(
+          getMonday(newStartDate),
+          -7 * preStepsCount,
+          "day"
+        );
+        newEndDate = startOfDate(newEndDate, "day");
+        newEndDate = addToDate(newEndDate, 1.5, "month");
+        break;
+      case "daily":
+        newStartDate = startOfDate(newStartDate, "day");
+        newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+        newEndDate = startOfDate(newEndDate, "day");
+        newEndDate = addToDate(newEndDate, 19, "day");
+        break;
+      default:
+        break;
+      // case ViewMode.QuarterDay:
+      //   newStartDate = startOfDate(newStartDate, "day");
+      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+      //   newEndDate = startOfDate(newEndDate, "day");
+      //   newEndDate = addToDate(newEndDate, 66, "hour"); // 24(1 day)*3 - 6
+      //   break;
+      // case ViewMode.HalfDay:
+      //   newStartDate = startOfDate(newStartDate, "day");
+      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+      //   newEndDate = startOfDate(newEndDate, "day");
+      //   newEndDate = addToDate(newEndDate, 108, "hour"); // 24(1 day)*5 - 12
+      //   break;
+      // case ViewMode.Hour:
+      //   newStartDate = startOfDate(newStartDate, "hour");
+      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "hour");
+      //   newEndDate = startOfDate(newEndDate, "day");
+      //   newEndDate = addToDate(newEndDate, 1, "day");
+      //   break;
+    }
+    return [newStartDate, newEndDate];
+  };  
   
   const showTaskTable = (task) => {
     setTask(task);
@@ -442,8 +540,11 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
     
     // Calculate minimum width needed for all days
     const minDayWidth = 40; // Increased minimum width per day
-    const startDate = d3.min(flatTasks, d => d.startDate);
-    const endDate = d3.max(flatTasks, d => d.finishDate);
+    let startDate = d3.min(flatTasks, d => d.startDate);
+    let endDate = d3.max(flatTasks, d => d.finishDate);
+    [startDate, endDate] = ganttDateRange(flatTasks, timeInterval, 1);
+
+    console.log("DATA ===> for dates", startDate, endDate)
     const totalDays = d3.timeDay.count(startDate, endDate);
     const minChartWidth = totalDays * minDayWidth;
      
@@ -489,11 +590,15 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
     // const taskScale = d3.scaleLinear()
     //   .domain([0, flatTasks.length - 1])  // Adjust domain to account for zero-based index
     //   .range([0, chartHeight - rowHeight]); // Adjust range to account for row height
-    const startOfFirstMonth = d3.timeMonth.floor(startDate);
-    const startOfFirstYear = d3.timeYear.floor(startDate);
+    // const startOfFirstMonth = d3.timeMonth.floor(startDate);
+    // const startOfFirstYear = d3.timeYear.floor(startDate);
 
+    if (timeInterval === "monthly") {
+      headerHeights.year = headerHeights.year + 12.5;
+      headerHeights.month = headerHeights.month + 12.5;
+    }
     // Add year headers
-    const years = d3.timeYear.range(startOfFirstYear, endDate);
+    const years = d3.timeYear.range(startDate, endDate);
     headerGroup.append('g')
       .attr('class', 'year-header')
       .attr('style',styleToString(styles.year_header))
@@ -536,7 +641,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
       });
 
     // Add month headers with similar dynamic centering
-    const months = d3.timeMonth.range(startOfFirstMonth, endDate);
+    const months = d3.timeMonth.range(startDate, endDate);
     headerGroup.append('g')
       .attr('class', 'month-header')
       .attr('style',styleToString(styles.month_header))
@@ -580,7 +685,8 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           .attr('y2', headerHeights.month);
       });
 
-    // Add day headers with increased minimum width
+    if (timeInterval === "daily") {
+          // Add day headers with increased minimum width
     const days = d3.timeDay.range(...timeScale.domain());
     headerGroup.append('g')
       .attr('class','day-header')
@@ -612,6 +718,40 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
           // .attr('class', isDarkMode?'darkmode-day-text':'');
           .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
         });
+    } else if (timeInterval === "weekly") {
+          // Add day headers with increased minimum width
+    const days = d3.timeWeek.range(...timeScale.domain());
+    headerGroup.append('g')
+      .attr('class','day-header')
+      .attr('style',styleToString(styles.day_header))
+      .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
+      .selectAll('.day-cell')
+      .data(days)
+      .enter()
+      .append('g')
+      .attr('class', 'day-cell')
+      .each(function(d) {
+        const dayStart = timeScale(d);
+        const dayEnd = timeScale(d3.timeWeek.offset(d, 1));
+        const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
+        const g = d3.select(this);
+        
+        g.append('rect')
+          .attr('x', dayStart)
+          .attr('y', 0)
+          .attr('width', dayWidth)
+          .attr('height', headerHeights.day)
+          // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
+          .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+        g.append('text')
+          .attr('x', dayStart + (dayWidth / 2))
+          .attr('y', headerHeights.day / 2)
+          .attr('dy', '.1em')
+          .text(`W${+d3.timeFormat("%U")(d) + 1}`)
+          // .attr('class', isDarkMode?'darkmode-day-text':'');
+          .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+        });
+    }
 
     // Add bars and milestones with proper vertical positioning
     flatTasks.forEach((task, index) => {
