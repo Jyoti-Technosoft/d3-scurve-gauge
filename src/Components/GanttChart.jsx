@@ -191,13 +191,16 @@ const styles = {
     fill: "white",
     stroke: "var(--gray-200)",
     strokeWidth: 1,
-    pointerEvents: "none"
+    pointerEvents: "none",
   },
   year_header_text: {
     fontSize: "14px",
     fontWeight: 600,
     fill: "var(--gray-900)",
-    pointerEvents: "none"
+    pointerEvents: "none",
+    userSelect: "none",
+    textAnchor: "middle",
+    dominantBaseline: "central"
   },
   month_header: {
     height: "25px",
@@ -788,6 +791,9 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             .style('font-size', styles.year_header_text.fontSize)
             .style('font-weight', styles.year_header_text.fontWeight)
             .style('pointer-events', styles.year_header_text.pointerEvents)
+            .style('user-select', styles.year_header_text.userSelect)
+            .style('text-anchor', styles.year_header_text.textAnchor)
+            .style('dominant-baseline', styles.year_header_text.dominantBaseline)
             .text(d => (d3.timeFormat('%Y')(d)));
           // + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
 
