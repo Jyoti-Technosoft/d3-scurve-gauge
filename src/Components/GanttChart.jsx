@@ -552,16 +552,32 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
       viewMode,
       preStepsCount
     ) => {
-      let newStartDate = tasks[0].startDate;
-      let newEndDate = tasks[0].startDate;
+      let newStartDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].startDate;
+      let newEndDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].finishDate;
+
       for (const task of tasks) {
-        if (task.startDate < newStartDate) {
-          newStartDate = task.startDate;
+        // Calculate the minimum start date
+        const taskStartDate = task.BL_milestoneActivityStartDate || task.UP_milestoneActivityStartDate;
+        if (taskStartDate && taskStartDate < newStartDate) {
+          newStartDate = taskStartDate;
         }
-        if (task.finishDate > newEndDate) {
-          newEndDate = task.finishDate;
+
+        // Calculate the maximum finish date
+        const taskFinishDate = task.BL_milestoneActivityFinishDate || task.UP_milestoneActivityFinishDate;
+        if (taskFinishDate && taskFinishDate > newEndDate) {
+          newEndDate = taskFinishDate;
         }
       }
+      // let newStartDate = tasks[0].startDate;
+      // let newEndDate = tasks[0].startDate;
+      // for (const task of tasks) {
+      //   if (task.startDate < newStartDate) {
+      //     newStartDate = task.startDate;
+      //   }
+      //   if (task.finishDate > newEndDate) {
+      //     newEndDate = task.finishDate;
+      //   }
+      // }
       switch (viewMode) {
         case "yearly":
           newStartDate = addToDate(newStartDate, -1, "year");
@@ -743,7 +759,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
         .each(function(d) {
           const year = d3.select(this);
           const yearStart = timeScale(d);
-          const yearEnd = timeScale(d3.timeYear.offset(d, 1));
+          let yearEndDate = d3.timeYear.offset(d, 1);
+          if (endDate < yearEndDate) {
+            yearEndDate = endDate;
+          }
+          const yearEnd = timeScale(yearEndDate);
           const yearWidth = yearEnd - yearStart;
           
           // Add year background
@@ -787,7 +807,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
         .each(function(d) {
           const month = d3.select(this);
           const monthStart = timeScale(d);
-          const monthEnd = timeScale(d3.timeMonth.offset(d, 1));
+          let monthEndDate = d3.timeMonth.offset(d, 1);
+          if (endDate < monthEndDate) {
+            monthEndDate = endDate;
+          }
+          const monthEnd = timeScale(monthEndDate);
           const monthWidth = monthEnd - monthStart;
           // Add month background
           month.append('rect')
@@ -865,7 +889,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           .attr('class', 'day-cell')
           .each(function(d) {
             const dayStart = timeScale(d);
-            const dayEnd = timeScale(d3.timeWeek.offset(d, 1));
+            let weekEndDate = d3.timeWeek.offset(d, 1);
+            if (endDate < weekEndDate) {
+              weekEndDate = endDate;
+            }
+            const dayEnd = timeScale(weekEndDate);
             const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
             const g = d3.select(this);
             
@@ -972,7 +1000,7 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
             // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
             .attr('x1', timeScale(date) + 15)
-            .attr('x2', timeScale(date))
+            .attr('x2', timeScale(date) + 15)
             .attr('y1', 0)
             .attr('y2', chartHeight)
             .style('stroke', '#f3f4f6')
@@ -984,8 +1012,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           gridLines.append('line')
             .attr('class', isDarkMode ? 'darkmode-grid-line' : 'grid-line')
             // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
-            .attr('x1', timeScale(date) + 15)
-            .attr('x2', timeScale(date))
+            .attr('x1', timeScale(date))
+            .attr('x2', timeScale(date) + 15)
             .attr('y1', 0)
             .attr('y2', chartHeight)
             .style('stroke', '#f3f4f6')
@@ -997,8 +1025,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           gridLines.append('line')
             .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
             // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
-            .attr('x1', timeScale(date) + (timeInterval === "daily" ? 15 : timeInterval === "monthly" ? -25 : 15))
-            .attr('x2', timeScale(date) + (timeInterval === "daily" ? 15 : timeInterval === "monthly" ? -25 : 15))
+            .attr('x1', timeScale(date) + -25)
+            .attr('x2', timeScale(date) + -25)
             .attr('y1', 0)
             .attr('y2', chartHeight)
             .style('stroke', '#f3f4f6')
