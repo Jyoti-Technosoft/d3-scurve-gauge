@@ -559,6 +559,15 @@ text {
   -ms-overflow-style: none; /* For IE and Edge */
 }
 
+.task-table-container::-webkit-scrollbar {
+  width: 0; /* Hide vertical scrollbar in WebKit browsers */
+  height: 10px; /* Show horizontal scrollbar */
+}
+
+.task-table-container::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+}
+
 .hidden-scrollbar::-webkit-scrollbar {
   display: none; /* For Chrome, Safari, and Opera */
 }

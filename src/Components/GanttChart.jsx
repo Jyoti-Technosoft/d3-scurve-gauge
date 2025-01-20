@@ -72,13 +72,14 @@ const styles = {
     taskTableContainer:{
       overflowY: "auto",
       height: "100%",
+      width: "300px",
       maxWidth: "80%",
       borderRight: "1px solid var(--gray-200)",
       minWidth:"200px"
     },
     splitBar: {
       width: "5px", /* Thickness of the split bar */
-      /* background: #ccc; Visual appearance */
+      background: "#ccc",
       cursor: "ew-resize", /* Resizing cursor */
       position: "relative",
       zIndex: 1,
@@ -99,13 +100,13 @@ const styles = {
       background: "#121212"
     },
     taskTable_th:{
-      padding: "12px",
+      // padding: "0 12px",
       textAlign: "left",
       fontWeight: 600,
       borderBottom: "1px solid var(--gray-200)",
       whiteSpace: "nowrap",
-      verticalAlign: "bottom",
-      height: "55px"
+      // verticalAlign: "bottom",
+      height: "25px"
     },
     taskTable_td:{
       textAlign: "left",
@@ -270,7 +271,7 @@ const styles = {
     }
   };
 
-const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked,isDarkMode }) => {
+const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked, isDarkMode, timeInterval }) => {
   const renderTask = (task, level = 0) => {
     const isExpanded = expandedTasks.includes(task.objectId);
     const hasChildren = task.children && task.children.length > 0;
@@ -283,7 +284,7 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
     return (
       <React.Fragment key={task.objectId}>
         <tr style={{...styles.taskRow}} className={`task-row ${task.type}`}>
-          <td style={{...styles.taskTable_td,fontWeight:`${task.type == "WBS" ?"600":"normal"} `, paddingLeft: `${(level * 20) + 10}px`, cursor: 'pointer' }} onClick={()=> showTaskTable(task)}>
+          <td style={{...styles.taskTable_td,fontWeight:`${task.type === "WBS" ? "600" : "normal" } `, paddingLeft: `${(level * 20) + 10}px`, cursor: 'pointer' }} onClick={()=> showTaskTable(task)}>
             {hasChildren && (
               <button 
               style={{padding:`${isExpanded?"4px 8px 6px":"8px 8px"}`,...styles.expandButton,...styles.expanded,...(isDarkMode ? styles.darkmode_expand_button : {})}}
@@ -325,15 +326,73 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
       <table style={styles.taskTable} className="task-table">
         <thead style={{...styles.taskTable_head,...(isDarkMode ? styles.taskTable_darkmode_thead : {})}}>
           <tr>
-            <th style={styles.taskTable_th}>Task Name</th>
-            {/* <th>Type</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Duration</th>
-            <th>Progress</th>
-            <th>Status</th>
-            <th>Owner</th>
-            <th>Priority</th> */}
+            <th style={{ ...styles.taskTable_th, height: timeInterval === "monthly" ? 42.5  : 30 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                <span style={{ position: "sticky", left: 0 }}></span>
+                <span
+                  style={{
+                    position: "sticky",
+                    right: 5,
+                  }}
+                >
+                  Year  → 
+                </span>
+              </div>              
+            </th>
+          </tr>
+          {timeInterval !== "monthly" && <tr>
+            <th style={{ ...styles.taskTable_th }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                <span style={{ position: "sticky", left: 5 }}></span>
+                <span
+                  style={{
+                    position: "sticky",
+                    right: 5,
+                  }}
+                >
+                  Month  → 
+                </span>
+              </div>
+            </th>
+          </tr>}
+          <tr>
+            <th style={{...styles.taskTable_th, height: timeInterval === "monthly" ? 37.5 : 25}}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                <span style={{ position: "sticky", left: 10 }}>Task Name</span>
+                <span
+                  style={{
+                    position: "sticky",
+                    right: 5,
+                  }}
+                >
+                  {timeInterval === "monthly" ? "Month " : timeInterval === "daily" ? "Day " : "Week "}  →
+                </span>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -344,545 +403,675 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
   );
 };
 
-const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,isDarkMode }) => {
+const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkMode }) => {
     const [timeInterval, setTimeInterval] = useState("daily");
-  const svgRef = useRef();
-  const headerSvgRef = useRef();
-  const taskTableRef = useRef();
-  const headerContainerRef = useRef();
-  const chartContainerRef = useRef();
-  const splitBarRef = useRef();
-  const [expandedTasks, setExpandedTasks] = useState([1, 5]); // Initially expand top-level tasks
-  const [isTaskClicked, setIsTaskClicked] = useState(false);
-  const [task, setTask] = useState();
-  const [expandedSubTasks, setExpandedSubTasks] = useState({}); // State to track which tasks are expanded
-  const [maxWidth, setMaxWidth] = useState("80%");
+    const svgRef = useRef();
+    const headerSvgRef = useRef();
+    const taskTableRef = useRef();
+    const headerContainerRef = useRef();
+    const chartContainerRef = useRef();
+    const splitBarRef = useRef();
+    const [expandedTasks, setExpandedTasks] = useState([1, 5]); // Initially expand top-level tasks
+    const [isTaskClicked, setIsTaskClicked] = useState(false);
+    const [task, setTask] = useState();
+    const [expandedSubTasks, setExpandedSubTasks] = useState({}); // State to track which tasks are expanded
+    // const [maxWidth, setMaxWidth] = useState("80%");
 
-  var addToDate = function addToDate(date, quantity, scale) {
-    var newDate = new Date(date.getFullYear() + (scale === "year" ? quantity : 0), date.getMonth() + (scale === "month" ? quantity : 0), date.getDate() + (scale === "day" ? quantity : 0), date.getHours() + (scale === "hour" ? quantity : 0), date.getMinutes() + (scale === "minute" ? quantity : 0), date.getSeconds() + (scale === "second" ? quantity : 0), date.getMilliseconds() + (scale === "millisecond" ? quantity : 0));
-    return newDate;
-  };
-  var startOfDate = function startOfDate(date, scale) {
-    var scores = ["millisecond", "second", "minute", "hour", "day", "month", "year"];
-  
-  
-    var shouldReset = function shouldReset(_scale) {
-      var maxScore = scores.indexOf(scale);
-      return scores.indexOf(_scale) <= maxScore;
-    };
-  
-  
-    var newDate = new Date(date.getFullYear(), shouldReset("year") ? 0 : date.getMonth(), shouldReset("month") ? 1 : date.getDate(), shouldReset("day") ? 0 : date.getHours(), shouldReset("hour") ? 0 : date.getMinutes(), shouldReset("minute") ? 0 : date.getSeconds(), shouldReset("second") ? 0 : date.getMilliseconds());
-    return newDate;
-  };
-
-  const getMonday = (date) => {
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-    return new Date(date.setDate(diff));
-  };
-  
-  
-  const ganttDateRange = (
-    tasks,
-    viewMode,
-    preStepsCount
-  ) => {
-    let newStartDate = tasks[0].startDate;
-    let newEndDate = tasks[0].startDate;
-    for (const task of tasks) {
-      if (task.startDate < newStartDate) {
-        newStartDate = task.startDate;
-      }
-      if (task.finishDate > newEndDate) {
-        newEndDate = task.finishDate;
-      }
-    }
-    switch (viewMode) {
-      case "yearly":
-        newStartDate = addToDate(newStartDate, -1, "year");
-        newStartDate = startOfDate(newStartDate, "year");
-        newEndDate = addToDate(newEndDate, 1, "year");
-        newEndDate = startOfDate(newEndDate, "year");
-        break;
-      case "":
-        newStartDate = addToDate(newStartDate, -3, "month");
-        newStartDate = startOfDate(newStartDate, "month");
-        newEndDate = addToDate(newEndDate, 3, "year");
-        newEndDate = startOfDate(newEndDate, "year");
-        break;
-      case "monthly":
-        newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
-        newStartDate = startOfDate(newStartDate, "month");
-        newEndDate = addToDate(newEndDate, 1, "year");
-        newEndDate = startOfDate(newEndDate, "year");
-        break;
-      case "weekly":
-        newStartDate = startOfDate(newStartDate, "day");
-        newStartDate = addToDate(
-          getMonday(newStartDate),
-          -7 * preStepsCount,
-          "day"
-        );
-        newEndDate = startOfDate(newEndDate, "day");
-        newEndDate = addToDate(newEndDate, 1.5, "month");
-        break;
-      case "daily":
-        newStartDate = startOfDate(newStartDate, "day");
-        newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
-        newEndDate = startOfDate(newEndDate, "day");
-        newEndDate = addToDate(newEndDate, 19, "day");
-        break;
-      default:
-        break;
-      // case ViewMode.QuarterDay:
-      //   newStartDate = startOfDate(newStartDate, "day");
-      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
-      //   newEndDate = startOfDate(newEndDate, "day");
-      //   newEndDate = addToDate(newEndDate, 66, "hour"); // 24(1 day)*3 - 6
-      //   break;
-      // case ViewMode.HalfDay:
-      //   newStartDate = startOfDate(newStartDate, "day");
-      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
-      //   newEndDate = startOfDate(newEndDate, "day");
-      //   newEndDate = addToDate(newEndDate, 108, "hour"); // 24(1 day)*5 - 12
-      //   break;
-      // case ViewMode.Hour:
-      //   newStartDate = startOfDate(newStartDate, "hour");
-      //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "hour");
-      //   newEndDate = startOfDate(newEndDate, "day");
-      //   newEndDate = addToDate(newEndDate, 1, "day");
-      //   break;
-    }
-    return [newStartDate, newEndDate];
-  };  
-  
-  const showTaskTable = (task) => {
-    setTask(task);
-    setIsTaskClicked(true);
-  }
-  // const preparedTasks = () => {
-  //   // console.log("DATA BASE ===> ", blMilestoneActivity);
-  //   // console.log("DATA UPDA ===> ", upMilestoneActivity);
-  //   // console.log("WBS1 DATA ===> ", wbsData);
-  //   const map = new Map(); // Map to store objects by their `objectId`
-  //   const result = []; // Final hierarchical list
-
-  //   // Step 1: Add all objects to the map and initialize `childrens` array
-  //   wbsData.forEach(item => {
-  //       map.set(item.objectId, { ...item, children: [] });
-  //   });
-
-  //   // Step 2: Build the hierarchy
-  //   wbsData.forEach(item => {
-  //       if (item.parentObjectId === null) {
-  //           // Top-level WBS (no parent)
-  //           result.push({ ...map.get(item.objectId), type: "WBS" });
-  //       } else {
-  //           // Child WBS: find its parent and add it to the `children` array
-  //           const parent = map.get(item.parentObjectId);
-  //           if (parent) {
-  //               parent.children.push(map.get(item.objectId));
-  //           }
-  //       }
-  //   });
-  //   console.log("DATA ==> ", result)
-  //   return result;
-  // }
-  // preparedTasks();
-
-  const flattenTasks = (tasks, result = []) => {
-    tasks.forEach(task => {
-      result.push(task);
-      if (task.children && expandedTasks.includes(task.objectId)) {
-        flattenTasks(task.children, result);
-      }
-    });
-    return result;
-  };
-
-  const styleToString = (styleObject) =>
-    Object.entries(styleObject)
-      .map(([key, value]) => `${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}: ${value};`)
-      .join(" ");
-
-      
-  const handleToggleExpand = (taskId) => {
-    setExpandedTasks(prev => 
-      prev.includes(taskId)
-        ? prev.filter(id => id !== taskId)
-        : [...prev, taskId]
-    );
-  };
-
-  useEffect(() => {
-    if (!tasks || tasks.length === 0) return;
-
-    const flatTasks = flattenTasks(tasks);
-    
-    // Clear any existing SVG content
-    d3.select(svgRef.current).selectAll("*").remove();
-    d3.select(headerSvgRef.current).selectAll("*").remove();
-
-    // Set up dimensions
-    const headerHeights = {
-      year: 30,
-      month: 25,
-      day: 25
-    };
-    const totalHeaderHeight = headerHeights.year + headerHeights.month + headerHeights.day;
-    const margin = { 
-      top: 0,
-      right: 30, 
-      bottom: 20, 
-      left: 0 
-    };
-    
-    // Calculate minimum width needed for all days
-    const minDayWidth = 40; // Increased minimum width per day
-    let startDate = d3.min(flatTasks, d => d.startDate);
-    let endDate = d3.max(flatTasks, d => d.finishDate);
-    [startDate, endDate] = ganttDateRange(flatTasks, timeInterval, 1);
-
-    console.log("DATA ===> for dates", startDate, endDate)
-    const totalDays = d3.timeDay.count(startDate, endDate);
-    const minChartWidth = totalDays * minDayWidth;
-     
-    // Calculate container width
-    const containerWidth = document.querySelector('.chart-container-1').clientWidth;
-    const chartWidth = Math.max(minChartWidth, containerWidth);
-    const rowHeight = 56; // 40px height + 16px padding (8px top + 8px bottom)
-    const barHeight = 32; // Adjusted bar height
-    const verticalPadding = (rowHeight - barHeight) / 2; // Center in row
-    const chartHeight = flatTasks.length * rowHeight;
-
-    // Create SVG with the calculated dimensions
-    const svg = d3.select(svgRef.current)
-      .attr('width', chartWidth)
-      .attr('height', chartHeight + margin.top + margin.bottom);
-    const headerSvg = d3.select(headerSvgRef.current)
-      .attr('width', chartWidth)
-      .attr('height', totalHeaderHeight);
-
-    // debugger
-    // Update time scale with new width
-    const timeScale = d3.scaleTime()
-      .domain([startDate, endDate])
-      .range([0, chartWidth - margin.left - margin.right]);
-
-    // Create chart container with horizontal scroll if needed
-    const chartContainer = d3.select('.chart-container-1')
-      .style('overflow-x', chartWidth > containerWidth ? 'auto' : 'hidden');
-
-    // Create header group
-    const headerGroup = headerSvg.append('g')
-      .attr('class', 'header-group')
-      // .attr('transform', `translate(${margin.left},0)`);
-      .attr('style', styleToString(styles.header_group))
-      .attr('transform', `translate(-25,0)`);
-
-    // Create chart group with proper offset
-    const chartGroup = svg.append('g')
-      .attr('class', 'chart-group')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Set up scales with proper domain and range
-    // const taskScale = d3.scaleLinear()
-    //   .domain([0, flatTasks.length - 1])  // Adjust domain to account for zero-based index
-    //   .range([0, chartHeight - rowHeight]); // Adjust range to account for row height
-    // const startOfFirstMonth = d3.timeMonth.floor(startDate);
-    // const startOfFirstYear = d3.timeYear.floor(startDate);
-
-    if (timeInterval === "monthly") {
-      headerHeights.year = headerHeights.year + 12.5;
-      headerHeights.month = headerHeights.month + 12.5;
-    }
-    // Add year headers
-    const years = d3.timeYear.range(startDate, endDate);
-    headerGroup.append('g')
-      .attr('class', 'year-header')
-      .attr('style',styleToString(styles.year_header))
-      .selectAll('.year-cell')
-      .data(years)
-      .enter()
-      .append('g')
-      .attr('class', 'year-cell')
-      .each(function(d) {
-        const year = d3.select(this);
-        const yearStart = timeScale(d);
-        const yearEnd = timeScale(d3.timeYear.offset(d, 1));
-        const yearWidth = yearEnd - yearStart;
-        
-        // Add year background
-        year.append('rect')
-          .attr('x', yearStart)
-          .attr('y', 0)
-          .attr('width', yearWidth)
-          .attr('height', headerHeights.year)
-          // .attr('class', isDarkMode?'darkmode-year-background':'year-background');
-        // Add year text centered in the visible area
-        year.append('text')
-          .attr('x', function() {
-            return d.getFullYear() === years[0].getFullYear() ? yearStart + yearWidth - 30 : yearStart + 30;
-          })
-          .attr('y', (headerHeights.year / 2) - 5)
-          .attr('dy', '0.35em')
-          // .attr('text-anchor', 'middle')
-          .attr('class', 'year-label')
-          .text(d => (d3.timeFormat('%Y')(d)) + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
-
-        // Add vertical separator line
-        year.append('line')
-          .attr('class', 'year-separator')
-          .attr('x1', yearStart)
-          .attr('x2', yearStart)
-          .attr('y1', 0)
-          .attr('y2', headerHeights.year);
+    const transformDataToTask = () => {
+      // const plannedPoints = groupData(planned, timeInterval);
+      // const actualPoints = groupData(actual, timeInterval);
+      // return { plannedPoints, actualPoints };
+      const map = new Map();
+      const result = [];
+      // Step 1: Add all WBS objects to the map and initialize `children` array
+      wbsData.forEach(item => {
+        map.set(item.code, {
+          ...item,
+          children: [],
+          startDate: new Date(item.startDate),
+          finishDate: new Date(item.finishDate),
+          type: "WBS",
+        });
       });
 
-    // Add month headers with similar dynamic centering
-    const months = d3.timeMonth.range(startDate, endDate);
-    headerGroup.append('g')
-      .attr('class', 'month-header')
-      .attr('style',styleToString(styles.month_header))
-      .attr('transform', `translate(0,${headerHeights.year})`)
-      .selectAll('.month-cell')
-      .data(months)
-      .enter()
-      .append('g')
-      .attr('class', 'month-cell')
-      .each(function(d) {
-        const month = d3.select(this);
-        const monthStart = timeScale(d);
-        const monthEnd = timeScale(d3.timeMonth.offset(d, 1));
-        const monthWidth = monthEnd - monthStart;
-        // Add month background
-        month.append('rect')
-          .attr('x', monthStart)
-          .attr('y', 0)
-          .attr('width', monthWidth)
-          .attr('height', headerHeights.month)
-          // .attr('class', isDarkMode?'darkmode-month-background':'month-background')
-          .attr('style', styleToString(isDarkMode ? (styles.darkmode_month_background) : styles.month_background))
-        // Add month text centered
-        month.append('text')
-          .attr('x', function() {
-            return d.getMonth() === 0 ? (monthStart + monthWidth - 15) : (monthStart + monthWidth / 2);
-          })
-          .attr('y', (headerHeights.month / 2) - 5)
-          .attr('dy', '0.35em')
-          // .attr('text-anchor', 'middle')
-          .attr('class', 'month-label')
-          .text(d3.timeFormat('%b')(d));
+      const groupedMilestones = {};
+      // Iterate over each milestone
+      blMilestoneActivity.forEach(milestone => {
+        const { wbsId, name } = milestone;
+        // Initialize the outer object if it doesn't exist
+        if (!groupedMilestones[wbsId]) {
+          groupedMilestones[wbsId] = {};
+        }
 
-        // Add separator line
-        month.append('line')
-          // .attr('class', 'month-separator')
-          .attr('style',  styleToString(styles.month_separator))
-          .attr('x1', monthStart)
-          .attr('x2', monthStart)
-          .attr('y1', 0)
-          .attr('y2', headerHeights.month);
+        // Initialize the inner object if it doesn't exist
+        if (!groupedMilestones[wbsId][name]) {
+          groupedMilestones[wbsId][name] = [];
+        }
+
+        // Push the milestone object into the appropriate array
+        if (groupedMilestones[wbsId][name].length === 0) {
+          groupedMilestones[wbsId][name].push({
+            ...milestone,
+            type: "milestone",
+            children: [],
+            startDate: new Date(milestone.startDate),
+            finishDate: new Date(milestone.finishDate),
+            BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+            BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+          });
+        } else {
+          groupedMilestones[wbsId][name][0] = {
+            ...milestone,
+            ...groupedMilestones[wbsId][name][0],
+            type: "milestone",
+            children: [],
+            BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+            BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+          };
+        }
       });
+      // Iterate over each milestone
+      upMilestoneActivity.forEach(milestone => {
+        const { wbsId, name } = milestone;
 
-    if (timeInterval === "daily") {
-          // Add day headers with increased minimum width
-    const days = d3.timeDay.range(...timeScale.domain());
-    headerGroup.append('g')
-      .attr('class','day-header')
-      .attr('style',styleToString(styles.day_header))
-      .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
-      .selectAll('.day-cell')
-      .data(days)
-      .enter()
-      .append('g')
-      .attr('class', 'day-cell')
-      .each(function(d) {
-        const dayStart = timeScale(d);
-        const dayEnd = timeScale(d3.timeDay.offset(d, 1));
-        const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
-        const g = d3.select(this);
-        
-        g.append('rect')
-          .attr('x', dayStart)
-          .attr('y', 0)
-          .attr('width', dayWidth)
-          .attr('height', headerHeights.day)
-          // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
-          .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
-        g.append('text')
-          .attr('x', dayStart + (dayWidth / 2))
-          .attr('y', headerHeights.day / 2)
-          .attr('dy', '.1em')
-          .text(d3.timeFormat('%d')(d))
-          // .attr('class', isDarkMode?'darkmode-day-text':'');
-          .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
-        });
-    } else if (timeInterval === "weekly") {
-          // Add day headers with increased minimum width
-    const days = d3.timeWeek.range(...timeScale.domain());
-    headerGroup.append('g')
-      .attr('class','day-header')
-      .attr('style',styleToString(styles.day_header))
-      .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
-      .selectAll('.day-cell')
-      .data(days)
-      .enter()
-      .append('g')
-      .attr('class', 'day-cell')
-      .each(function(d) {
-        const dayStart = timeScale(d);
-        const dayEnd = timeScale(d3.timeWeek.offset(d, 1));
-        const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
-        const g = d3.select(this);
-        
-        g.append('rect')
-          .attr('x', dayStart)
-          .attr('y', 0)
-          .attr('width', dayWidth)
-          .attr('height', headerHeights.day)
-          // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
-          .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
-        g.append('text')
-          .attr('x', dayStart + (dayWidth / 2))
-          .attr('y', headerHeights.day / 2)
-          .attr('dy', '.1em')
-          .text(`W${+d3.timeFormat("%U")(d) + 1}`)
-          // .attr('class', isDarkMode?'darkmode-day-text':'');
-          .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
-        });
+        // Initialize the outer object if it doesn't exist
+        if (!groupedMilestones[wbsId]) {
+          groupedMilestones[wbsId] = {};
+        }
+
+        // Initialize the inner object if it doesn't exist
+        if (!groupedMilestones[wbsId][name]) {
+          groupedMilestones[wbsId][name] = [];
+        }
+
+        // Push the milestone object into the appropriate array
+        if (groupedMilestones[wbsId][name].length === 0) {
+          groupedMilestones[wbsId][name].push({
+            ...milestone,
+            type: "milestone",
+            children: [],
+            UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+            UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+          });
+        } else {
+          groupedMilestones[wbsId][name][0] = {
+            ...milestone,
+            ...groupedMilestones[wbsId][name][0],
+            children: [],
+            UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+            UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+          };
+        }
+      });
+      // Step 4: Build the hierarchy
+      Object.keys(groupedMilestones).forEach((key) => {
+        let wbs = map.get(key);
+        if (wbs && wbs.parentObjectId != null) {
+          let children = [];
+          Object.values(groupedMilestones[key]).forEach(value => {
+            children = children.concat(value);
+          });
+          wbs.children = wbs.children.concat(children);
+          result.push({...wbs});
+        }
+      });
+      // tasks = result;
+      return result;
+    };
+
+    const [tasks] = useState(transformDataToTask());
+
+    const addToDate = (date, quantity, scale) => {
+      var newDate = new Date(date.getFullYear() + (scale === "year" ? quantity : 0), date.getMonth() + (scale === "month" ? quantity : 0), date.getDate() + (scale === "day" ? quantity : 0), date.getHours() + (scale === "hour" ? quantity : 0), date.getMinutes() + (scale === "minute" ? quantity : 0), date.getSeconds() + (scale === "second" ? quantity : 0), date.getMilliseconds() + (scale === "millisecond" ? quantity : 0));
+      return newDate;
+    };
+
+    const startOfDate = (date, scale) => {
+      var scores = ["millisecond", "second", "minute", "hour", "day", "month", "year"];
+    
+    
+      var shouldReset = function shouldReset(_scale) {
+        var maxScore = scores.indexOf(scale);
+        return scores.indexOf(_scale) <= maxScore;
+      };
+    
+    
+      var newDate = new Date(date.getFullYear(), shouldReset("year") ? 0 : date.getMonth(), shouldReset("month") ? 1 : date.getDate(), shouldReset("day") ? 0 : date.getHours(), shouldReset("hour") ? 0 : date.getMinutes(), shouldReset("minute") ? 0 : date.getSeconds(), shouldReset("second") ? 0 : date.getMilliseconds());
+      return newDate;
+    };
+
+    const getMonday = (date) => {
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+      return new Date(date.setDate(diff));
+    };
+  
+  
+    const ganttDateRange = (
+      tasks,
+      viewMode,
+      preStepsCount
+    ) => {
+      let newStartDate = tasks[0].startDate;
+      let newEndDate = tasks[0].startDate;
+      for (const task of tasks) {
+        if (task.startDate < newStartDate) {
+          newStartDate = task.startDate;
+        }
+        if (task.finishDate > newEndDate) {
+          newEndDate = task.finishDate;
+        }
+      }
+      switch (viewMode) {
+        case "yearly":
+          newStartDate = addToDate(newStartDate, -1, "year");
+          newStartDate = startOfDate(newStartDate, "year");
+          newEndDate = addToDate(newEndDate, 1, "year");
+          newEndDate = startOfDate(newEndDate, "year");
+          break;
+        case "":
+          newStartDate = addToDate(newStartDate, -3, "month");
+          newStartDate = startOfDate(newStartDate, "month");
+          newEndDate = addToDate(newEndDate, 3, "year");
+          newEndDate = startOfDate(newEndDate, "year");
+          break;
+        case "monthly":
+          newStartDate = addToDate(newStartDate, -1 * preStepsCount, "month");
+          newStartDate = startOfDate(newStartDate, "month");
+          newEndDate = addToDate(newEndDate, 1, "year");
+          newEndDate = startOfDate(newEndDate, "year");
+          break;
+        case "weekly":
+          newStartDate = startOfDate(newStartDate, "day");
+          newStartDate = addToDate(
+            getMonday(newStartDate),
+            -7 * preStepsCount,
+            "day"
+          );
+          newEndDate = startOfDate(newEndDate, "day");
+          newEndDate = addToDate(newEndDate, 1.5, "month");
+          break;
+        case "daily":
+          newStartDate = startOfDate(newStartDate, "day");
+          newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+          newEndDate = startOfDate(newEndDate, "day");
+          newEndDate = addToDate(newEndDate, 19, "day");
+          break;
+        default:
+          break;
+        // case ViewMode.QuarterDay:
+        //   newStartDate = startOfDate(newStartDate, "day");
+        //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+        //   newEndDate = startOfDate(newEndDate, "day");
+        //   newEndDate = addToDate(newEndDate, 66, "hour"); // 24(1 day)*3 - 6
+        //   break;
+        // case ViewMode.HalfDay:
+        //   newStartDate = startOfDate(newStartDate, "day");
+        //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "day");
+        //   newEndDate = startOfDate(newEndDate, "day");
+        //   newEndDate = addToDate(newEndDate, 108, "hour"); // 24(1 day)*5 - 12
+        //   break;
+        // case ViewMode.Hour:
+        //   newStartDate = startOfDate(newStartDate, "hour");
+        //   newStartDate = addToDate(newStartDate, -1 * preStepsCount, "hour");
+        //   newEndDate = startOfDate(newEndDate, "day");
+        //   newEndDate = addToDate(newEndDate, 1, "day");
+        //   break;
+      }
+      return [newStartDate, newEndDate];
+    };  
+  
+    const showTaskTable = (task) => {
+      setTask(task);
+      setIsTaskClicked(true);
     }
 
-    // Add bars and milestones with proper vertical positioning
-    flatTasks.forEach((task, index) => {
-      const rowY = index * rowHeight; // Exact row position
+    const flattenTasks = (tasks, result = []) => {
+      tasks.forEach(task => {
+        result.push(task);
+        if (task.children && expandedTasks.includes(task.objectId)) {
+          flattenTasks(task.children, result);
+        }
+      });
+      return result;
+    };
+
+    const styleToString = (styleObject) =>
+      Object.entries(styleObject)
+        .map(([key, value]) => `${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}: ${value};`)
+        .join(" ");
+
       
-      if (task.type === 'milestone') {
-        if (task.BL_milestoneActivityStartDate) {
-          const x = timeScale(task.BL_milestoneActivityStartDate);
-          const y = rowY + (rowHeight / 2); // Center of row
-          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+    const handleToggleExpand = (taskId) => {
+      setExpandedTasks(prev => 
+        prev.includes(taskId)
+          ? prev.filter(id => id !== taskId)
+          : [...prev, taskId]
+      );
+    };
+
+    useEffect(() => {
+      if (!tasks || tasks.length === 0) return;
+
+      const flatTasks = flattenTasks(tasks);
+      
+      // Clear any existing SVG content
+      d3.select(svgRef.current).selectAll("*").remove();
+      d3.select(headerSvgRef.current).selectAll("*").remove();
+
+      // Set up dimensions
+      const headerHeights = {
+        year: 30,
+        month: 25,
+        day: 25
+      };
+      const totalHeaderHeight = headerHeights.year + headerHeights.month + headerHeights.day;
+      const margin = { 
+        top: 0,
+        right: 30, 
+        bottom: 20, 
+        left: 0 
+      };
+      
+      // Calculate minimum width needed for all days
+      let minDayWidth = 40; // Increased minimum width per day
+      let startDate = d3.min(flatTasks, d => d.startDate);
+      let endDate = d3.max(flatTasks, d => d.finishDate);
+      [startDate, endDate] = ganttDateRange(flatTasks, timeInterval, 1);
+
+      let totalDays = d3.timeDay.count(startDate, endDate);
+      if (timeInterval === "monthly") {
+        totalDays = d3.timeMonth.count(startDate, endDate);
+        minDayWidth = 150;
+      } else if (timeInterval === "weekly") {
+        totalDays = d3.timeWeek.count(startDate, endDate);
+        minDayWidth = 80;
+      }
+      const minChartWidth = totalDays * minDayWidth;
+      
+      // Calculate container width
+      const containerWidth = document.querySelector('.chart-container-1').clientWidth;
+      const chartWidth = Math.max(minChartWidth, containerWidth);
+      const rowHeight = 56; // 40px height + 16px padding (8px top + 8px bottom)
+      const barHeight = 32; // Adjusted bar height
+      // const verticalPadding = (rowHeight - barHeight) / 2; // Center in row
+      const chartHeight = flatTasks.length * rowHeight;
+
+      // Create SVG with the calculated dimensions
+      const svg = d3.select(svgRef.current)
+        .attr('width', chartWidth)
+        .attr('height', chartHeight + margin.top + margin.bottom);
+      const headerSvg = d3.select(headerSvgRef.current)
+        .attr('width', chartWidth)
+        .attr('height', totalHeaderHeight);
+
+      // Update time scale with new width
+      const timeScale = d3.scaleTime()
+        .domain([startDate, endDate])
+        .range([0, chartWidth - margin.left - margin.right]);
+
+      // Create chart container with horizontal scroll if needed
+      d3.select('.chart-container-1')
+        .style('overflow-x', chartWidth > containerWidth ? 'auto' : 'hidden');
+
+      // Create header group
+      const headerGroup = headerSvg.append('g')
+        .attr('class', 'header-group')
+        // .attr('transform', `translate(${margin.left},0)`);
+        .attr('style', styleToString(styles.header_group))
+        .attr('transform', `translate(-25,0)`);
+
+      // Create chart group with proper offset
+      const chartGroup = svg.append('g')
+        .attr('class', 'chart-group')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+      if (timeInterval === "monthly") {
+        headerHeights.year = headerHeights.year + 12.5;
+        headerHeights.month = headerHeights.month + 12.5;
+      }
+      // Add year headers
+      const years = d3.timeYear.range(startDate, endDate);
+      headerGroup.append('g')
+        .attr('class', 'year-header')
+        .attr('style',styleToString(styles.year_header))
+        .selectAll('.year-cell')
+        .data(years)
+        .enter()
+        .append('g')
+        .attr('class', 'year-cell')
+        .each(function(d) {
+          const year = d3.select(this);
+          const yearStart = timeScale(d);
+          const yearEnd = timeScale(d3.timeYear.offset(d, 1));
+          const yearWidth = yearEnd - yearStart;
           
-          chartGroup.append('path')
-            .attr('class', 'milestoneDiamond base')
-            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
-            .attr('d', d3.symbol()
-              .type(d3.symbolDiamond)
-              .size(milestoneSize))
-            .attr('transform', `translate(${x - 30}, ${y})`)
-            .attr('data-task-id', task.objectId);
-        } 
-        if (task.BL_milestoneActivityFinishDate) {
-          const x = timeScale(task.BL_milestoneActivityFinishDate);
-          const y = rowY + (rowHeight / 2); // Center of row
-          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
-          
-          chartGroup.append('path')
-            .attr('class', 'milestoneDiamond base')
-            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
-            .attr('d', d3.symbol()
-              .type(d3.symbolDiamond)
-              .size(milestoneSize))
-            .attr('transform', `translate(${x - 30}, ${y})`)
-            .attr('data-task-id', task.objectId);
-        }
-        if (task.UP_milestoneActivityStartDate) {
-          const x = timeScale(task.UP_milestoneActivityStartDate);
-          const y = rowY + (rowHeight / 2); // Center of row
-          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
-          
-          chartGroup.append('path')
-            .attr('class', 'milestoneDiamond')
-            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
-            .attr('d', d3.symbol()
-              .type(d3.symbolDiamond)
-              .size(milestoneSize))
-            .attr('transform', `translate(${x - 30}, ${y})`)
-            .attr('data-task-id', task.objectId);
-        }
-        if (task.UP_milestoneActivityFinishDate) {
-          const x = timeScale(task.UP_milestoneActivityFinishDate);
-          const y = rowY + (rowHeight / 2); // Center of row
-          const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
-          
-          chartGroup.append('path')
-            .attr('class', 'milestoneDiamond')
-            .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
-            .attr('d', d3.symbol()
-              .type(d3.symbolDiamond)
-              .size(milestoneSize))
-            .attr('transform', `translate(${x - 30}, ${y})`)
-            .attr('data-task-id', task.objectId);
-        }
-        // const x = timeScale(task.startDate);
-        // const y = rowY + (rowHeight / 2); // Center of row
-        // const milestoneSize = Math.pow(barHeight * 0.7, 2); // Reduced size, squared for area
+          // Add year background
+          year.append('rect')
+            .attr('x', yearStart)
+            .attr('y', 0)
+            .attr('width', yearWidth)
+            .attr('height', headerHeights.year)
+            .attr('class', 'year-background');
+          // Add year text centered in the visible area
+          year.append('text')
+            .attr('x', function() {
+              return d.getFullYear() === years[0].getFullYear() ? yearStart + yearWidth - 30 : yearStart + 30;
+            })
+            .attr('y', (headerHeights.year / 2) - 5)
+            .attr('dy', '0.35em')
+            .attr('text-anchor', 'middle')
+            .attr('class', 'year-label')
+            .text(d => (d3.timeFormat('%Y')(d)) + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
+
+          // Add vertical separator line
+          year.append('line')
+            .attr('class', 'year-separator')
+            .attr('x1', yearStart)
+            .attr('x2', yearStart)
+            .attr('y1', 0)
+            .attr('y2', headerHeights.year);
+        });
+
+      // Add month headers with similar dynamic centering
+      const months = d3.timeMonth.range(startDate, endDate);
+      headerGroup.append('g')
+        .attr('class', 'month-header')
+        .attr('style',styleToString(styles.month_header))
+        .attr('transform', `translate(0,${headerHeights.year})`)
+        .selectAll('.month-cell')
+        .data(months)
+        .enter()
+        .append('g')
+        .attr('class', 'month-cell')
+        .each(function(d) {
+          const month = d3.select(this);
+          const monthStart = timeScale(d);
+          const monthEnd = timeScale(d3.timeMonth.offset(d, 1));
+          const monthWidth = monthEnd - monthStart;
+          // Add month background
+          month.append('rect')
+            .attr('x', monthStart)
+            .attr('y', 0)
+            .attr('width', monthWidth)
+            .attr('height', headerHeights.month)
+            .attr('class', isDarkMode?'darkmode-month-background':'month-background')
+            .attr('style', styleToString(isDarkMode ? (styles.darkmode_month_background) : styles.month_background))
+          // Add month text centered
+          month.append('text')
+            .attr('x', function() {
+              return (monthStart + monthWidth / 2);
+            })
+            .attr('y', (headerHeights.month / 2) - 5)
+            .attr('dy', '0.35em')
+            .attr('text-anchor', 'middle')
+            .attr('class', 'month-label')
+            .text(d3.timeFormat('%b')(d));
+
+          // Add separator line
+          month.append('line')
+            .attr('class', 'month-separator')
+            .attr('style',  styleToString(styles.month_separator))
+            .attr('x1', monthStart)
+            .attr('x2', monthStart)
+            .attr('y1', 0)
+            .attr('y2', headerHeights.month);
+        });
+
+      if (timeInterval === "daily") {
+        // Add day headers with increased minimum width
+        const days = d3.timeDay.range(...timeScale.domain());
+        headerGroup.append('g')
+          .attr('class','day-header')
+          .attr('style',styleToString(styles.day_header))
+          .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
+          .selectAll('.day-cell')
+          .data(days)
+          .enter()
+          .append('g')
+          .attr('class', 'day-cell')
+          .each(function(d) {
+            const dayStart = timeScale(d);
+            const dayEnd = timeScale(d3.timeDay.offset(d, 1));
+            const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
+            const g = d3.select(this);
+            
+            g.append('rect')
+              .attr('x', dayStart)
+              .attr('y', 0)
+              .attr('width', dayWidth)
+              .attr('height', headerHeights.day)
+              // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
+              .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+            g.append('text')
+              .attr('x', dayStart + (dayWidth / 2))
+              .attr('y', headerHeights.day / 2)
+              .attr('dy', '.1em')
+              .text(d3.timeFormat('%d')(d))
+              // .attr('class', isDarkMode?'darkmode-day-text':'');
+              .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+            });
+      } else if (timeInterval === "weekly") {
+        // Add day headers with increased minimum width
+        const days = d3.timeWeek.range(...timeScale.domain());
+        headerGroup.append('g')
+          .attr('class','day-header')
+          .attr('style',styleToString(styles.day_header))
+          .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
+          .selectAll('.day-cell')
+          .data(days)
+          .enter()
+          .append('g')
+          .attr('class', 'day-cell')
+          .each(function(d) {
+            const dayStart = timeScale(d);
+            const dayEnd = timeScale(d3.timeWeek.offset(d, 1));
+            const dayWidth = Math.max(dayEnd - dayStart, minDayWidth);
+            const g = d3.select(this);
+            
+            g.append('rect')
+              .attr('x', dayStart)
+              .attr('y', 0)
+              .attr('width', dayWidth)
+              .attr('height', headerHeights.day)
+              // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
+              .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+            g.append('text')
+              .attr('x', dayStart + (dayWidth / 2))
+              .attr('y', headerHeights.day / 2)
+              .attr('dy', '.1em')
+              .text(`W${+d3.timeFormat("%U")(d) + 1}`)
+              // .attr('class', isDarkMode?'darkmode-day-text':'');
+              .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+            });
+      }
+
+      // Add bars and milestones with proper vertical positioning
+      flatTasks.forEach((task, index) => {
+        const rowY = index * rowHeight; // Exact row position
         
-        // chartGroup.append('path')
-        //   .attr('class', 'milestoneDiamond')
-        //   .attr('d', d3.symbol()
-        //     .type(d3.symbolDiamond)
-        //     .size(milestoneSize))
-        //   .attr('transform', `translate(${x - 30}, ${y})`)
-        //   .attr('data-task-id', task.objectId);
+        if (task.type === 'milestone') {
+          if (task.BL_milestoneActivityStartDate) {
+            const x = timeScale(task.BL_milestoneActivityStartDate);
+            const y = rowY + (rowHeight / 2); // Center of row
+            const milestoneSize = Math.pow(barHeight * 0.5, 2); // Reduced size, squared for area
+            
+            chartGroup.append('path')
+              .attr('class', 'milestoneDiamond base')
+              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              .attr('d', d3.symbol()
+                .type(d3.symbolDiamond)
+                .size(milestoneSize))
+              .attr('transform', `translate(${x - 30}, ${y})`)
+              .attr('data-task-id', task.objectId);
+          } 
+          if (task.BL_milestoneActivityFinishDate) {
+            const x = timeScale(task.BL_milestoneActivityFinishDate);
+            const y = rowY + (rowHeight / 2); // Center of row
+            const milestoneSize = Math.pow(barHeight * 0.5, 2); // Reduced size, squared for area
+            
+            chartGroup.append('path')
+              .attr('class', 'milestoneDiamond base')
+              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              .attr('d', d3.symbol()
+                .type(d3.symbolDiamond)
+                .size(milestoneSize))
+              .attr('transform', `translate(${x - 30}, ${y})`)
+              .attr('data-task-id', task.objectId);
+          }
+          if (task.UP_milestoneActivityStartDate) {
+            const x = timeScale(task.UP_milestoneActivityStartDate);
+            const y = rowY + (rowHeight / 2); // Center of row
+            const milestoneSize = Math.pow(barHeight * 0.5, 2); // Reduced size, squared for area
+            
+            chartGroup.append('path')
+              .attr('class', 'milestoneDiamond')
+              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              .attr('d', d3.symbol()
+                .type(d3.symbolDiamond)
+                .size(milestoneSize))
+              .attr('transform', `translate(${x - 30}, ${y})`)
+              .attr('data-task-id', task.objectId);
+          }
+          if (task.UP_milestoneActivityFinishDate) {
+            const x = timeScale(task.UP_milestoneActivityFinishDate);
+            const y = rowY + (rowHeight / 2); // Center of row
+            const milestoneSize = Math.pow(barHeight * 0.5, 2); // Reduced size, squared for area
+            
+            chartGroup.append('path')
+              .attr('class', 'milestoneDiamond')
+              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              .attr('d', d3.symbol()
+                .type(d3.symbolDiamond)
+                .size(milestoneSize))
+              .attr('transform', `translate(${x - 30}, ${y})`)
+              .attr('data-task-id', task.objectId);
+          }
+        } else {
+          //NOTE: Enable below code to add timeline for tasks other than milestone
+          // chartGroup.append('rect')
+          //   .attr('class', `${isDarkMode?'darkmode-bar':'bar'} ${task.type}`)
+          // .attr('style', styleToString(Object.assign({}, styles.bar, isDarkMode ? styles.darkmode_bar : {})));
+          //   .attr('y', rowY + verticalPadding)
+          //   .attr('x', timeScale(task.startDate))
+          //   .attr('height', barHeight)
+          //   .attr('width', Math.max(timeScale(task.finishDate) - timeScale(task.startDate), 1))
+          //   .attr('rx', 3)
+          //   .attr('ry', 3)
+          //   .attr('data-task-id', task.objectId);
+        }
+      });
+
+      // Add grid lines with proper offset
+      const gridLines = chartGroup.append('g')
+        .attr('class', 'grid-lines');
+
+      if (timeInterval === "daily") {
+        d3.timeDay.range(...timeScale.domain()).forEach(date => {
+          gridLines.append('line')
+            .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
+            // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+            .attr('x1', timeScale(date) + 15)
+            .attr('x2', timeScale(date))
+            .attr('y1', 0)
+            .attr('y2', chartHeight)
+            .style('stroke', '#f3f4f6')
+            .style('stroke-width', 1)
+            .style('stroke-dasharray', '2,2');
+        });
+      } else if (timeInterval === "weekly") {
+        d3.timeWeek.range(...timeScale.domain()).forEach(date => {
+          gridLines.append('line')
+            .attr('class', isDarkMode ? 'darkmode-grid-line' : 'grid-line')
+            // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+            .attr('x1', timeScale(date) + 15)
+            .attr('x2', timeScale(date))
+            .attr('y1', 0)
+            .attr('y2', chartHeight)
+            .style('stroke', '#f3f4f6')
+            .style('stroke-width', 1)
+            .style('stroke-dasharray', '2,2');
+        });
+      } else if (timeInterval === "monthly") {
+        d3.timeMonth.range(...timeScale.domain()).forEach(date => {
+          gridLines.append('line')
+            .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
+            // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+            .attr('x1', timeScale(date) + (timeInterval === "daily" ? 15 : timeInterval === "monthly" ? -25 : 15))
+            .attr('x2', timeScale(date) + (timeInterval === "daily" ? 15 : timeInterval === "monthly" ? -25 : 15))
+            .attr('y1', 0)
+            .attr('y2', chartHeight)
+            .style('stroke', '#f3f4f6')
+            .style('stroke-width', 1)
+            .style('stroke-dasharray', '2,2');
+        });
       } else {
-        // chartGroup.append('rect')
-        //   .attr('class', `${isDarkMode?'darkmode-bar':'bar'} ${task.type}`)
-        // .attr('style', styleToString(Object.assign({}, styles.bar, isDarkMode ? styles.darkmode_bar : {})));
-        //   .attr('y', rowY + verticalPadding)
-        //   .attr('x', timeScale(task.startDate))
-        //   .attr('height', barHeight)
-        //   .attr('width', Math.max(timeScale(task.finishDate) - timeScale(task.startDate), 1))
-        //   .attr('rx', 3)
-        //   .attr('ry', 3)
-        //   .attr('data-task-id', task.objectId);
+        d3.timeDay.range(...timeScale.domain()).forEach(date => {
+          gridLines.append('line')
+            .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
+            // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+            .attr('x1', timeScale(date) + 15)
+            .attr('x2', timeScale(date))
+            .attr('y1', 0)
+            .attr('y2', chartHeight);
+        });
       }
-    });
 
-    // Add grid lines with proper offset
-    const gridLines = chartGroup.append('g')
-      .attr('class', 'grid-lines');
+      // Add tooltips
+      const tooltip = d3.select('body')
+        .append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0)
+        .style('pointer-events', 'none');
 
-    d3.timeDay.range(...timeScale.domain()).forEach(date => {
-      gridLines.append('line')
-        .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
-        // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
-        .attr('x1', timeScale(date) + 15)
-        .attr('x2', timeScale(date))
-        .attr('y1', 0)
-        .attr('y2', chartHeight);
-    });
+      let tooltipTimeout;
 
-    // Add tooltips
-    const tooltip = d3.select('body')
-      .append('div')
-      .attr('class', 'tooltip')
-      .style('opacity', 0)
-      .style('pointer-events', 'none');
+      // Helper function to find task by element
+      const findTaskByElement = (element) => {
+        const taskId = element.getAttribute('data-task-id');
+        return flatTasks.find(t => t.objectId.toString() === taskId);
+      };
 
-    let tooltipTimeout;
-
-    // Helper function to find task by element
-    const findTaskByElement = (element) => {
-      const taskId = element.getAttribute('data-task-id');
-      return flatTasks.find(t => t.objectId.toString() === taskId);
-    };
-
-    svg.selectAll('.bar, .milestoneDiamond')
-    // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
-    .on('mouseover', (event) => {
-      const task = findTaskByElement(event.target);
-      
-      if (task) {
-        clearTimeout(tooltipTimeout);
+      svg.selectAll('.bar, .milestoneDiamond')
+      // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+      .on('mouseover', (event) => {
+        const task = findTaskByElement(event.target);
         
-        const tooltipContent = `
-          <strong>${task.name}</strong><br/>
-          <span class="tooltip-label">Start:</span> ${task.UP_milestoneActivityStartDate ? task.UP_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
-          <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate ? task.UP_milestoneActivityFinishDate.toLocaleDateString() : '-'}
-          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
-        `;
+        if (task) {
+          clearTimeout(tooltipTimeout);
+          
+          const tooltipContent = `
+            <strong>Updated Activity</strong><br/>
+            <strong>${task.name}</strong><br/>
+            <span class="tooltip-label">Start:</span> ${task.UP_milestoneActivityStartDate ? task.UP_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
+            <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate ? task.UP_milestoneActivityFinishDate.toLocaleDateString() : '-'}
+            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+          `;
 
+          const tooltipWidth = 200;
+          const tooltipHeight = 100;
+          
+          let left = event.pageX + 10;
+          let top = event.pageY - 10;
+          
+          if (left + tooltipWidth > window.innerWidth) {
+            left = event.pageX - tooltipWidth - 10;
+          }
+          
+          if (top + tooltipHeight > window.innerHeight) {
+            top = event.pageY - tooltipHeight - 10;
+          }
+
+          tooltip
+            .html(tooltipContent)
+            .style('left', `${left}px`)
+            .style('top', `${top}px`)
+            .transition()
+            .duration(200)
+            .style('opacity', 1);
+        }
+      })
+      .on('mousemove', (event) => {
         const tooltipWidth = 200;
         const tooltipHeight = 100;
         
@@ -898,55 +1087,56 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
         }
 
         tooltip
-          .html(tooltipContent)
           .style('left', `${left}px`)
-          .style('top', `${top}px`)
-          .transition()
-          .duration(200)
-          .style('opacity', 1);
-      }
-    })
-    .on('mousemove', (event) => {
-      const tooltipWidth = 200;
-      const tooltipHeight = 100;
-      
-      let left = event.pageX + 10;
-      let top = event.pageY - 10;
-      
-      if (left + tooltipWidth > window.innerWidth) {
-        left = event.pageX - tooltipWidth - 10;
-      }
-      
-      if (top + tooltipHeight > window.innerHeight) {
-        top = event.pageY - tooltipHeight - 10;
-      }
+          .style('top', `${top}px`);
+      })
+      .on('mouseout', () => {
+        tooltipTimeout = setTimeout(() => {
+          tooltip.transition()
+            .duration(200)
+            .style('opacity', 0);
+        }, 100);
+      });
 
-      tooltip
-        .style('left', `${left}px`)
-        .style('top', `${top}px`);
-    })
-    .on('mouseout', () => {
-      tooltipTimeout = setTimeout(() => {
-        tooltip.transition()
-          .duration(200)
-          .style('opacity', 0);
-      }, 100);
-    });
-
-    svg.selectAll('.bar, .milestoneDiamond.base')
-    .on('mouseover', (event) => {
-      const task = findTaskByElement(event.target);
-      
-      if (task) {
-        clearTimeout(tooltipTimeout);
+      svg.selectAll('.bar, .milestoneDiamond.base')
+      .on('mouseover', (event) => {
+        const task = findTaskByElement(event.target);
         
-        const tooltipContent = `
-          <strong>${task.name}</strong><br/>
-          <span class="tooltip-label">Start:</span> ${task.BL_milestoneActivityStartDate ? task.BL_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
-          <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.BL_milestoneActivityFinishDate ? task.BL_milestoneActivityFinishDate.toLocaleDateString() : '-'}
-          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
-        `;
+        if (task) {
+          clearTimeout(tooltipTimeout);
+          
+          const tooltipContent = `
+            <strong>Baseline Activity</strong><br/>
+            <strong>${task.name}</strong><br/>
+            <span class="tooltip-label">Start:</span> ${task.BL_milestoneActivityStartDate ? task.BL_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
+            <span class="tooltip-label">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.BL_milestoneActivityFinishDate ? task.BL_milestoneActivityFinishDate.toLocaleDateString() : '-'}
+            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+          `;
 
+          const tooltipWidth = 200;
+          const tooltipHeight = 100;
+          
+          let left = event.pageX + 10;
+          let top = event.pageY - 10;
+          
+          if (left + tooltipWidth > window.innerWidth) {
+            left = event.pageX - tooltipWidth - 10;
+          }
+          
+          if (top + tooltipHeight > window.innerHeight) {
+            top = event.pageY - tooltipHeight - 10;
+          }
+
+          tooltip
+            .html(tooltipContent)
+            .style('left', `${left}px`)
+            .style('top', `${top}px`)
+            .transition()
+            .duration(200)
+            .style('opacity', 1);
+        }
+      })
+      .on('mousemove', (event) => {
         const tooltipWidth = 200;
         const tooltipHeight = 100;
         
@@ -962,46 +1152,22 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
         }
 
         tooltip
-          .html(tooltipContent)
           .style('left', `${left}px`)
-          .style('top', `${top}px`)
-          .transition()
-          .duration(200)
-          .style('opacity', 1);
-      }
-    })
-    .on('mousemove', (event) => {
-      const tooltipWidth = 200;
-      const tooltipHeight = 100;
-      
-      let left = event.pageX + 10;
-      let top = event.pageY - 10;
-      
-      if (left + tooltipWidth > window.innerWidth) {
-        left = event.pageX - tooltipWidth - 10;
-      }
-      
-      if (top + tooltipHeight > window.innerHeight) {
-        top = event.pageY - tooltipHeight - 10;
-      }
+          .style('top', `${top}px`);
+      })
+      .on('mouseout', () => {
+        tooltipTimeout = setTimeout(() => {
+          tooltip.transition()
+            .duration(200)
+            .style('opacity', 0);
+        }, 100);
+      });
 
-      tooltip
-        .style('left', `${left}px`)
-        .style('top', `${top}px`);
-    })
-    .on('mouseout', () => {
-      tooltipTimeout = setTimeout(() => {
-        tooltip.transition()
-          .duration(200)
-          .style('opacity', 0);
-      }, 100);
-    });
-
-    // Clean up tooltip when component unmounts
-    return () => {
-      tooltip.remove();
-    };
-  }, [tasks, expandedTasks, flattenTasks]);
+      // Clean up tooltip when component unmounts
+      return () => {
+        tooltip.remove();
+      };
+    }, [expandedTasks, flattenTasks, isDarkMode, timeInterval, ganttDateRange, tasks]);
 
   const startDragging = (e) => {
     e.preventDefault();
@@ -1121,6 +1287,7 @@ const GanttChart = ({ tasks, blMilestoneActivity, upMilestoneActivity, wbsData,i
                     showTaskTable={showTaskTable}
                     isTaskClicked={isTaskClicked}
                     isDarkMode={isDarkMode}
+                    timeInterval={timeInterval}
                 />
             </div>
             <div style={styles.splitBar} ref={splitBarRef} onMouseDown={startDragging} ></div>
