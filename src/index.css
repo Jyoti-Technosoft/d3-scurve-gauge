@@ -1,18 +1,3 @@
-/* body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  height: 100vh;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-} */
-
 :root {
   /* Base colors */
   --primary-color: #4f46e5;
@@ -53,165 +38,6 @@ body {
   color: var(--gray-800);
 }
 
-/* .gantt-chart-container {
-  display: flex;
-  margin: 20px;
-  height: 450px;
-  max-height: 450px;
-  border: 1px solid var(--gray-200);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-} */
-
-/* .task-table-container {
-  overflow-y: auto;
-  height: 100%;
-  max-width: 80%; 
-  border-right: 1px solid var(--gray-200);
-  min-Width:200px;
-} */
-
-/* .split-bar {
-  width: 5px; /* Thickness of the split bar */
-  /* background: #ccc; Visual appearance */
-  /* cursor: ew-resize; /* Resizing cursor */
-  /* position: relative; */
-  /* z-index: 1; */ 
-/* } */ 
-
-/* .task-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-} */
-
-/* .task-table thead {
-  position: sticky;
-  top: 0;
-  background: var(--gray-50);
-  z-index: 10;
-  height: 55px;
-} */
-
-/* .task-table .darkmode-thead{
-  background: #121212;
-} */
-
-/* .task-table th {
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  border-bottom: 1px solid var(--gray-200);
-  white-space: nowrap;
-  vertical-align: bottom;
-  height: 55px;
-} */
-
-/* .task-table td {
-  text-align: left;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--gray-100);
-  white-space: nowrap;
-  height: 40px;
-} */
-
-/* .task-table tr {
-   background-color: white; 
-} */
-
-/* .task-table tr:hover {
-  background-color: var(--gray-50);
-} */
-
-/* .task-row {
-  transition: background-color 0.2s;
-} */
-
-/* .task-row:hover {
-  background-color: var(--gray-50);
-} */
-
-.task-row.project {
-  font-weight: 600;
-  color: var(--gray-900);
-}
-
-.task-row.phase {
-  font-weight: 500;
-  color: var(--gray-800);
-}
-
-.task-row.task {
-  color: var(--gray-700);
-}
-
-/* .task-row.milestone {
-  font-style: italic;
-  color: var(--gray-600);
-} */
-
-/* .expand-button {
-  background: #FFFFFF;
-  padding: 0 4px;
-  margin-right: 8px;
-  cursor: pointer;
-  color: #000000;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 5px;
-  border: 1px solid #000000;
-  font-size: 18px;
-} */
-
-/* .expand-button:hover {
-  color: var(--gray-700);
-} */
-
-/* .expand-button.expanded {
-  transform: rotate(0deg);
-}
-
-.darkmode-expand-button{
-  background: #121212;
-  color: #FFFFFF;
-  border: 1px solid #FFFFFF;
-} */
-
-/* .darkmode-expand-button:hover{
-  color: #FFFFFF;
-} */
-
-/* .chart-container {
-  height: 100%;
-  flex: 1;
-  overflow-x: hidden;
-  position: relative;
-} */
-
-/* .chart-container-1 {
-  height: calc(100% - 80px);
-  flex: 1;
-  position: relative;
-} */
-
-/* .chart-container svg {
-  display: block;
-  min-width: 100%;
-} */
-
-/* .chart-container-1 svg {
-  display: block;
-  min-width: 100%;
-} */
-
-/* Ensure headers stay fixed while scrolling */
-/* .header-group {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-} */
-
 /* Custom scrollbar for better visibility */
 .chart-container::-webkit-scrollbar {
   height: 8px;
@@ -249,246 +75,16 @@ body {
   background: var(--gray-400);
 }
 
-/* Gantt Chart Headers */
- /* .year-background, .month-background {
-  fill: var(--gray-50);
-  stroke: var(--gray-200);
-  stroke-width: 1;
-}
-
-.darkmode-year-background, .darkmode-month-background {
-  fill: #121212;
-  stroke: #FFFFFF;
-}  */
-
-/* .year-label, .month-label {
-  fill: var(--gray-700);
-  font-size: 0.875rem;
-  font-weight: 600;
-} */
-
-/* .year-separator, .month-separator {
-  stroke: var(--gray-200);
-  stroke-width: 1;
-} */
-
-/* .header-group {
-  font-family: inherit;
-} */
-
 .year-cell:first-child .year-separator,
 .month-cell:first-child .month-separator {
   display: none;
 }
 
-/* Ensure text is always visible */
-/* .year-label, .month-label {
-  pointer-events: none;
-  user-select: none;
-} */
-
-/* Headers */
-/* .header-group {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  box-shadow: var(--shadow-sm);
-} */
-
-/* .header-group text {
-  font-size: 12px;
-  fill: var(--gray-700);
-  font-weight: 500;
-  text-anchor: middle;
-  dominant-baseline: central;
-  user-select: none;
-} */
-
-/* .year-header {
-  height: 30px;
-} */
-
-/* .year-header text {
-  font-size: 14px;
-  font-weight: 600;
-  fill: var(--gray-900);
-} */
-
-/* .year-text {
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  fill: var(--gray-900) !important;
-} */
-
-/* .month-header {
-  height: 25px;
-} */
-
-/* .month-header text {
-  font-size: 13px;
-  font-weight: 500;
-  fill: var(--gray-800);
-} */
-
-/* .month-header .darkmode-month-text{
-  fill: #FFFFFF;
-} */
-
-/* .day-header {
-  height: 25px;
-} */
-
-/* .day-header text {
-  font-size: 12px;
-  font-weight: 500;
-  fill: var(--gray-700);
-}
-
-.day-header  .darkmode-day-text{
-  fill: #FFFFFF;
-} */
-
-/* .header-cell {
-  fill: var(--gray-50);
-  stroke: var(--gray-200);
-  stroke-width: 1;
-} */
-
-/* .year-header .header-cell {
-  fill: white;
-  stroke-width: 1;
-} */
-
-/* .month-header .header-cell {
-  fill: var(--gray-50);
-} */
-
-/* .day-header .header-cell {
-  fill: white;
-} */
-
-/* .day-header .darkmode-header-cell{
-fill:#121212;
-stroke: var(--gray-200);
-} */
-
-/* Ensure headers are visible */
-/* .year-header, .month-header, .day-header {
-  pointer-events: none;
-} */
-
-/* .year-header text, .month-header text, .day-header text {
-  pointer-events: none;
-} */
-
 /* Remove any text decoration */
-text {
+/* text {
   text-decoration: none;
   font-family: inherit;
-}
-
-/* Task bars and milestones */
-/* .bar {
-  rx: 4px;
-  ry: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 } */
-
-/* .darkmode-bar{
-  fill: #FFFFFF;
-} */
-
-.bar.project {
-  fill: var(--primary-color);
-  opacity: 0.9;
-}
-
-.bar.phase {
-  fill: var(--success-color);
-  opacity: 0.85;
-}
-
-.bar.task {
-  fill: var(--warning-color);
-  opacity: 0.8;
-}
-
-.bar:hover {
-  opacity: 1;
-}
-
-/* .milestone {
-  fill: var(--danger-color);
-  opacity: 0.9;
-  cursor: pointer;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: all 0.15s ease-out;
-  will-change: transform;
-} */
-
-/* .milestone:hover {
-  opacity: 1;
-  transform: scale(1.2);
-} */
-
- /* .milestoneDiamond {
-  fill: var(--danger-color);
-  opacity: 0.8;
-  cursor: pointer;
-}
-
-.milestoneDiamond.base {
-  fill: #4E91FD;
-}
-
-.milestoneDiamond:hover {
-  opacity: 1;
-}  */
-
-/* Grid */
-/* .grid-line {
-  stroke: var(--gray-100);
-  stroke-width: 1;
-  stroke-dasharray: 2,2;
-}
-
-.darkmode-grid-line{
-  stroke:#000000;
-  stroke-width: 1;
-  stroke-dasharray: 2,2;
-} */
-
-/* Tooltip */
-.tooltip {
-  position: fixed;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
-  box-shadow: var(--shadow-lg);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  pointer-events: none;
-  z-index: 1000;
-  max-width: 200px;
-  transition: opacity 0.2s ease;
-  will-change: transform;
-}
-
-.tooltip strong {
-  color: var(--gray-900);
-  font-weight: 600;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.tooltip-label {
-  color: var(--gray-500);
-  font-weight: 500;
-  margin-right: 4px;
-}
 
 /* Scrollbars */
 .task-table-container::-webkit-scrollbar,
@@ -520,7 +116,7 @@ text {
 }
 
 /* Progress bar styles */
-.progress-bar {
+/* .progress-bar {
   width: 100%;
   height: 20px;
   background-color: var(--gray-100);
@@ -543,21 +139,16 @@ text {
   color: var(--gray-700);
   font-size: 0.75rem;
   font-weight: 500;
-}
+} */
 
 /* Status colors */
-.task-row td:nth-child(7) {
+/* .task-row td:nth-child(7) {
   font-weight: 500;
 }
 
 .task-row td:nth-child(9) {
   font-weight: 500;
-}
-
-.hidden-scrollbar {
-  scrollbar-width: none; /* For Firefox */
-  -ms-overflow-style: none; /* For IE and Edge */
-}
+} */
 
 .task-table-container::-webkit-scrollbar {
   width: 0; /* Hide vertical scrollbar in WebKit browsers */
