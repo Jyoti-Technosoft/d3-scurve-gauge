@@ -91,12 +91,15 @@ const styles = {
   taskTable_head: {
     position: "sticky",
     top: 0,
-    background: "var(--gray-50)",
+    // background: "var(--gray-50)",
+    background: "#07545e",
+    color: "#FFFFFF",
     zIndex: 10,
     height: "55px"
   },
   taskTable_darkmode_thead: {
-    background: "#121212"
+    // background: "#121212"
+    background: "#07545e",
   },
   taskTable_th: {
     textAlign: "left",
@@ -109,7 +112,7 @@ const styles = {
     padding: "8px 12px",
     borderBottom: "1px solid var(--gray-100)",
     whiteSpace: "nowrap",
-    height: "40px"
+    height: "28px"
   },
   taskTable_tr: {
     "&:hover": {
@@ -189,8 +192,6 @@ const styles = {
   year_header: {
     height: "30px",
     fill: "white",
-    stroke: "var(--gray-200)",
-    strokeWidth: 1,
     pointerEvents: "none",
   },
   year_header_text: {
@@ -201,6 +202,10 @@ const styles = {
     userSelect: "none",
     textAnchor: "middle",
     dominantBaseline: "central"
+  },
+  year_separator: {
+    stroke: "var(--gray-200)",
+    strokeWidth: 1
   },
   month_header: {
     height: "25px",
@@ -256,6 +261,54 @@ const styles = {
   base: {
     fill: "#4E91FD"
   },
+  ganttChartFilter: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  ganttCharts: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+  },
+  legendButton: {
+    display: "flex",
+    alignItems: "center",
+    fontSize: "14px",
+  },
+  legendIconBase: {
+    // width: "16px",
+    // height: "16px",
+    // marginRight: "5px",
+    // display: "inline-block",
+    // borderRadius: "4px",
+    width: "0",
+    height: "0",
+    marginRight: "10px",
+    display: "inline-block",
+    borderLeft: "8px solid transparent",
+    borderRight: "8px solid transparent",
+    borderTop: "8px solid transparent",
+    borderBottom: "8px solid transparent",
+    transform: "rotate(45deg)",
+  },
+  legendIconBaseline: {
+    backgroundColor: "#4E91FD",
+  },
+  legendIconUpdated: {
+    backgroundColor: "var(--danger-color)",
+  },
+  taskDataTable_th: {
+    verticalAlign: "top",
+    paddingTop: "5px",
+    textAlign: "center"
+  },
+  taskDataTable_td: {
+    padding: "6px 0px",
+  },
+  taskDataTable_tr: {
+    // borderBottom: "1px solid var(--gray-200)",
+  }
 };
 
 const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTaskClicked, isDarkMode, timeInterval }) => {
@@ -411,9 +464,6 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
   // const [maxWidth, setMaxWidth] = useState("80%");
 
   const transformDataToTask = () => {
-    // const plannedPoints = groupData(planned, timeInterval);
-    // const actualPoints = groupData(actual, timeInterval);
-    // return { plannedPoints, actualPoints };
     const map = new Map();
     const result = [];
     // Step 1: Add all WBS objects to the map and initialize `children` array
@@ -510,9 +560,172 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
     });
     // tasks = result;
     return result;
+    
+    
+    // const map = new Map();
+    // // const mapItem = new Map(); // Keeps track of milestones grouped by WBS Object IDs
+    // const result = [];
+    // // Step 1: Add all WBS objects to the map and initialize `children` array
+    // wbsData.forEach(item => {
+    //   map.set(item.objectId, {
+    //     ...item,
+    //     children: [],
+    //     startDate: new Date(item.startDate),
+    //     finishDate: new Date(item.finishDate),
+    //     type: "WBS",
+    //   });
+    // });
+
+    // const groupedMilestones = {};
+    // // Iterate over each milestone
+    // blMilestoneActivity.forEach(milestone => {
+    //   const { wbsId, name } = milestone;
+    //   // Initialize the outer object if it doesn't exist
+    //   if (!groupedMilestones[wbsId]) {
+    //     groupedMilestones[wbsId] = {};
+    //   }
+
+    //   // Initialize the inner object if it doesn't exist
+    //   if (!groupedMilestones[wbsId][name]) {
+    //     groupedMilestones[wbsId][name] = [];
+    //   }
+
+    //   // Push the milestone object into the appropriate array
+    //   if (groupedMilestones[wbsId][name].length == 0) {
+    //     groupedMilestones[wbsId][name].push({
+    //       ...milestone,
+    //       type: "milestone",
+    //       children: [],
+    //       startDate: new Date(milestone.startDate),
+    //       finishDate: new Date(milestone.finishDate),
+    //       BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+    //       BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+    //     });
+    //   } else {
+    //     groupedMilestones[wbsId][name][0] = {
+    //       ...milestone,
+    //       ...groupedMilestones[wbsId][name][0],
+    //       type: "milestone",
+    //       children: [],
+    //       BL_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null, 
+    //       BL_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+    //     };
+    //   }
+    // });
+    // // Iterate over each milestone
+    // upMilestoneActivity.forEach(milestone => {
+    //   const { wbsId, name } = milestone;
+
+    //   // Initialize the outer object if it doesn't exist
+    //   if (!groupedMilestones[wbsId]) {
+    //     groupedMilestones[wbsId] = {};
+    //   }
+
+    //   // Initialize the inner object if it doesn't exist
+    //   if (!groupedMilestones[wbsId][name]) {
+    //     groupedMilestones[wbsId][name] = [];
+    //   }
+
+    //   // Push the milestone object into the appropriate array
+    //   if (groupedMilestones[wbsId][name].length == 0) {
+    //     groupedMilestones[wbsId][name].push({
+    //       ...milestone,
+    //       type: "milestone",
+    //       children: [],
+    //       UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+    //       UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+    //     });
+    //   } else {
+    //     groupedMilestones[wbsId][name][0] = {
+    //       ...milestone,
+    //       ...groupedMilestones[wbsId][name][0],
+    //       children: [],
+    //       UP_milestoneActivityStartDate: milestone.type === "START_MILESTONE" ? new Date(milestone.startDate) : null,
+    //       UP_milestoneActivityFinishDate: milestone.type === "FINISH_MILESTONE" ? new Date(milestone.finishDate) : null,
+    //     };
+    //   }
+    // });
+    // console.log("Final mapItem with all milestones:", groupedMilestones);
+    // // Step 4: Build the hierarchy
+    // wbsData.forEach(item => {
+    //   if (item.parentObjectId === null) {
+    //       // Top-level WBS (no parent)
+    //       // result.push({ ...map.get(item.objectId), type: "WBS" });
+    //   } else {
+    //       // Child WBS: find its parent and add it to the `children` array
+    //       const parent = map.get(item.parentObjectId);
+    //       if (parent.parentObjectId != null) {
+    //         result.push({ ...map.get(parent.parentObjectId) });
+    //       } else {
+    //         result.push({ ...map.get(item.objectId) });
+    //       }
+    //       if (parent) {
+    //           parent.children.push(map.get(item.objectId));
+    //       }
+    //   }
+    // });
+
+    // // if (groupedMilestones[item.code]) {
+    // //   // children = children.concat(Object.values(groupedMilestones[item.code])[0]);
+    // //   // console.log("FOUND VALUE ===>", children);
+    // // }
+    // mapNewMilestones(result, groupedMilestones)
+    // // console.log("GROUPED ===>", );
+
+    // // console.log("DATA ==> ", result)
+    // // wbsData.forEach(item => {
+    // //   const enrichedItem = map.get(item.objectId);
+    // //   enrichedItem.milestones = mapItem.get(item.objectId) || []; // Add milestones if any
+    // //   if (item.parentObjectId === null) {
+    // //     // Top-level WBS (no parent)
+    // //     result.push(enrichedItem);
+    // //   } else {
+    // //     // Child WBS: find its parent and add it to the `children` array
+    // //     const parent = map.get(item.parentObjectId);
+    // //     if (parent) {
+    // //       parent.children.push(enrichedItem);
+    // //     }
+    // //   }
+    // // });
+    // // console.log("Final WBS hierarchy with milestones:", result);
+    // // tasks = result;
+    // return result;
   };
 
   const [tasks] = useState(transformDataToTask());
+
+    // Recursive function to traverse and map new milestones
+function mapNewMilestones(existingList, newMilestones) {
+  existingList.forEach(item => {
+      // Check if the item has children
+      if (item.children && item.children.length > 0) {
+          item.children.forEach(child => {
+              // Check if the child's code matches any key in newMilestones
+              if (newMilestones[child.code]) {
+                  // Map the new milestones to the child
+                  const milestoneEntries = newMilestones[child.code];
+                  Object.values(milestoneEntries).forEach(milestone => {
+                    child.children = child.children.concat(milestone);
+                  });
+                  // for (const milestoneName in milestoneEntries) {
+                  //     if (milestoneEntries.hasOwnProperty(milestoneName)) {
+                  //         child.children.push(milestoneEntries[milestoneName]);
+                  //     }
+                  // }
+              }
+              // Recursively check for children of the current child
+              mapNewMilestones(child.children, newMilestones);
+          });
+      } else if (newMilestones[item.code]) {
+        let children = [];
+        Object.values(newMilestones[item.code]).forEach(milestone => {
+          children = children.concat(milestone);
+        });
+        item.children = children;
+        // console.log("VALUES ===> ", Object.values(newMilestones[item.code]))
+      }
+  });
+}
 
   const addToDate = (date, quantity, scale) => {
     var newDate = new Date(date.getFullYear() + (scale === "year" ? quantity : 0), date.getMonth() + (scale === "month" ? quantity : 0), date.getDate() + (scale === "day" ? quantity : 0), date.getHours() + (scale === "hour" ? quantity : 0), date.getMinutes() + (scale === "minute" ? quantity : 0), date.getSeconds() + (scale === "second" ? quantity : 0), date.getMilliseconds() + (scale === "millisecond" ? quantity : 0));
@@ -698,8 +911,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
     // Calculate container width
     const containerWidth = document.querySelector('.chart-container-1').clientWidth;
     const chartWidth = Math.max(minChartWidth, containerWidth);
-    const rowHeight = 56; // 40px height + 16px padding (8px top + 8px bottom)
-    const barHeight = 32; // Adjusted bar height
+    const rowHeight = 45; // 28px height + 16px padding (8px top + 8px bottom)
+    const barHeight = 28; // Adjusted bar height
     // const verticalPadding = (rowHeight - barHeight) / 2; // Center in row
     const chartHeight = flatTasks.length * rowHeight;
 
@@ -799,7 +1012,9 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
 
           // Add vertical separator line
           year.append('line')
-            .attr('class', 'year-separator')
+            // .attr('class', 'year-separator')
+            .style('stroke', styles.year_separator.stroke)
+            .style('stroke-width', styles.year_separator.strokeWidth)
             .attr('x1', yearStart)
             .attr('x2', yearStart)
             .attr('y1', 0)
@@ -1114,6 +1329,21 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
       });
     }
 
+    // Add Horizontal Grid Lines
+    d3.range(rowHeight + 3, chartHeight, rowHeight).forEach(y => {
+      gridLines.append('line')
+          .attr('class', isDarkMode ? 'darkmode-grid-line' : 'grid-line')
+          // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
+          .attr('x1', 0)
+          .attr('x2', chartWidth)
+          .attr('y1', y)
+          .attr('y2', y)
+          .style('stroke', '#f3f4f6')
+          .style('stroke-width', 1)
+          .style('stroke-dasharray', '2,2');
+  });
+  
+
     // Add tooltips
     const tooltip = d3.select('body')
       .append('div')
@@ -1150,12 +1380,12 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           clearTimeout(tooltipTimeout);
 
           const tooltipContent = `
-            <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">Updated Activity</strong><br/>
-            <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
-            <span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Start:</span> ${task.UP_milestoneActivityStartDate ? task.UP_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
-            <span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate ? task.UP_milestoneActivityFinishDate.toLocaleDateString() : '-'}
-            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
-          `;
+          <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">Updated</strong><br/>
+          <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
+          ${task.UP_milestoneActivityStartDate ? `<span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Start:</span>${task.UP_milestoneActivityStartDate.toLocaleDateString()}<br/>`: ''}
+          ${task.UP_milestoneActivityFinishDate ? `<span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate.toLocaleDateString()}`: ''}
+          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+        `;
 
           const tooltipWidth = 200;
           const tooltipHeight = 100;
@@ -1215,13 +1445,12 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           clearTimeout(tooltipTimeout);
 
           const tooltipContent = `
-            <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">Baseline Activity</strong><br/>
-            <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
-            <span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Start:</span> ${task.BL_milestoneActivityStartDate ? task.BL_milestoneActivityStartDate.toLocaleDateString() : '-'}<br/>
-            <span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.BL_milestoneActivityFinishDate ? task.BL_milestoneActivityFinishDate.toLocaleDateString() : '-'}
-            ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
-          `;
-
+          <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">Baseline</strong><br/>
+          <strong style="color: var(--gray-900); font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
+          ${task.BL_milestoneActivityStartDate ? `<span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Start:</span> ${task.BL_milestoneActivityStartDate.toLocaleDateString()}<br/>`: ''}
+          ${task.BL_milestoneActivityFinishDate ? `<span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span>${task.BL_milestoneActivityFinishDate.toLocaleDateString()}`: ''}
+          ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="color: var(--gray-500); font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
+        `;
           const tooltipWidth = 200;
           const tooltipHeight = 100;
 
@@ -1326,12 +1555,12 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
     return `${day}/${month}/${year}`;
   }
 
-  const renderTaskRows = (task) => {
+  const renderTaskRows = (task, isLastRow = false) => {
     const isExpanded = expandedSubTasks[task.objectId];
     return (
       <>
-        <tr>
-          <td>
+        <tr style={{borderBottom: isLastRow ? "none" : "1px solid var(--gray-200)"}}>
+          {/* <td style={styles.taskDataTable_td}>
             {task.children.length > 0 && (
               <span
                 onClick={() => toggleExpandCollapse(task.objectId)}
@@ -1340,36 +1569,50 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
                 {isExpanded ? "−" : "+"}
               </span>
             )}
-          </td>
-          <td>{task.code || task.id}</td>
-          <td>{task.name}</td>
-          <td>{task.projectType}</td>
-          <td>{getFormattedDate(task.startDate)}</td>
-          <td>{getFormattedDate(task.finishDate)}</td>
+          </td> */}
+          <td style={styles.taskDataTable_td}>{task.code || task.id}</td>
+          <td style={styles.taskDataTable_td}>{""}</td>
+          <td style={styles.taskDataTable_td}>{task.name}</td>
+          <td style={styles.taskDataTable_td}>{task.projectType}</td>
+          <td style={styles.taskDataTable_td}>{""}</td>
+          <td style={styles.taskDataTable_td}>{""}</td>
+          <td style={styles.taskDataTable_td}>{getFormattedDate(task.startDate)}</td>
+          <td style={styles.taskDataTable_td}>{getFormattedDate(task.finishDate)}</td>
         </tr>
-        {isExpanded &&
+          {
           task.children.map((child, index) => (
             <React.Fragment key={index}>
-              {renderTaskRows(child)}
+              {renderTaskRows(child, index === task?.children?.length - 1)}
             </React.Fragment>
           ))}
       </>
     );
   };
-
   return (
     <div style={styles.ganttChart}>
-      <div style={styles.dropdownContainer}>
-        <select
-          value={timeInterval}
-          onChange={(e) => setTimeInterval(e.target.value)}
-          style={styles.dropdown}
-        >
-          <option style={styles.dropdownOption} value="daily">Daily</option>
-          <option style={styles.dropdownOption} value="weekly">Weekly</option>
-          <option style={styles.dropdownOption} value="monthly">Monthly</option>
-        </select>
-      </div>
+        <div style={styles.ganttChartFilter}>
+        <div style={styles.ganttCharts}>
+          <div style={styles.legendButton}>
+            <span style={{ ...styles.legendIconBase, ...styles.legendIconBaseline }}></span>
+            Baseline
+          </div>
+          <div style={styles.legendButton}>
+            <span style={{ ...styles.legendIconBase, ...styles.legendIconUpdated }}></span>
+            Updated
+          </div>
+        </div>
+        <div style={styles.dropdownContainer}>
+          <select
+            value={timeInterval}
+            onChange={(e) => setTimeInterval(e.target.value)}
+            style={styles.dropdown}
+          >
+            <option style={styles.dropdownOption} value="daily">Daily</option>
+            <option style={styles.dropdownOption} value="weekly">Weekly</option>
+            <option style={styles.dropdownOption} value="monthly">Monthly</option>
+          </select>
+        </div>
+        </div>
       <div style={styles.ganttChartContainer}>
         <div style={styles.taskTableContainer} className='task-table-container' ref={taskTableRef} onScroll={() =>
           handleScroll(taskTableRef.current, chartContainerRef.current)
@@ -1406,14 +1649,22 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
       </div>
       {isTaskClicked && (
         <table style={styles.taskTable} className="task-table">
-          <thead style={{ ...styles.taskTable_head, ...(isDarkMode ? styles.taskTable_darkmode_thead : {}) }}>
+          <thead style={{ ...styles.taskTable_head, height: "50px", background: "#07545e", color: "#FFFFFF" }}>
             <tr>
-              <th></th>
-              <th style={styles.taskTable_th}>Task Code</th>
-              <th style={styles.taskTable_th}>Task Name</th>
-              <th style={styles.taskTable_th}>Project Type</th>
-              <th style={styles.taskTable_th}>Start Date</th>
-              <th style={styles.taskTable_th}>Finish Date</th>
+              {/* <th></th> */}
+              {/* <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Task Code</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Task Name</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Project Type</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Start Date</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Finish Date</th> */}
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>WBS</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Child WBS</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Task</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Milestone Type</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Baseline Start Date</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Baseline Finish Date</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Start Date</th>
+              <th style={{ ...styles.taskTable_th, ...styles.taskDataTable_th }}>Finish Date</th>
             </tr>
           </thead>
           <tbody>
