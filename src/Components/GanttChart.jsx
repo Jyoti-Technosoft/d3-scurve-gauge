@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 const styles = {
@@ -66,7 +66,7 @@ const styles = {
       height: "450px",
       maxHeight: "450px",
       border: "1px solid var(--gray-200)",
-      borderRadius: "8px",
+      // borderRadius: "8px",
       boxShadow: "var(--shadow-md)"
     },
     taskTableContainer:{
@@ -106,7 +106,7 @@ const styles = {
       borderBottom: "1px solid var(--gray-200)",
       whiteSpace: "nowrap",
       // verticalAlign: "bottom",
-      height: "25px"
+      // height: "19px"
     },
     taskTable_td:{
       textAlign: "left",
@@ -178,11 +178,11 @@ const styles = {
       stroke: "var(--gray-200)",
       strokeWidth: 1
     },
-    darkmode_month_background: {
-      fill: "#121212",
-      stroke: "#FFFFFF",
-      strokeWidth: 1
-    },
+    // darkmode_month_background: {
+    //   fill: "#121212",
+    //   stroke: "#FFFFFF",
+    //   strokeWidth: 1
+    // },
     month_label:{
       fill: "var(--gray-700)",
       fontSize: "0.875rem",
@@ -192,9 +192,9 @@ const styles = {
       textAnchor: "middle",
       dominantBaseline: "central"
     },
-    darkmode_month_text:{
-      fill: "#FFFFFF"
-    },
+    // darkmode_month_text:{
+    //   fill: "#FFFFFF"
+    // },
     month_separator:{
       stroke: "var(--gray-200)",
       strokeWidth: 1
@@ -228,9 +228,9 @@ const styles = {
       dominantBaseline: "central",
       pointerEvents: "none"
     },
-    darkmode_day_header_text:{
-      fill: "#FFFFFF",
-    },
+    // darkmode_day_header_text:{
+    //   fill: "#FFFFFF",
+    // },
     headerCell:{
       fill:"var(--gray-50)",
       stroke: "var(--gray-200)",
@@ -325,8 +325,8 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
     // <div className="" style={{ width: "100%" }}>
       <table style={styles.taskTable} className="task-table">
         <thead style={{...styles.taskTable_head,...(isDarkMode ? styles.taskTable_darkmode_thead : {})}}>
-          <tr>
-            <th style={{ ...styles.taskTable_th, height: timeInterval === "monthly" ? 42.5  : 30 }}>
+        {timeInterval === "monthly" && <tr>
+            <th style={{ ...styles.taskTable_th,borderBottom:"none" }}>
               <div
                 style={{
                   display: "flex",
@@ -334,6 +334,8 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
                   alignItems: "center",
                   width: "100%",
                   position: "relative",
+                  borderBottom: "1px solid var(--gray-200)",
+                  height: "38px"
                 }}
               >
                 <span style={{ position: "sticky", left: 0 }}></span>
@@ -347,9 +349,9 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
                 </span>
               </div>              
             </th>
-          </tr>
+          </tr>}
           {timeInterval !== "monthly" && <tr>
-            <th style={{ ...styles.taskTable_th }}>
+            <th style={{ ...styles.taskTable_th,borderBottom:"none", }}>
               <div
                 style={{
                   display: "flex",
@@ -357,6 +359,8 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
                   alignItems: "center",
                   width: "100%",
                   position: "relative",
+                  borderBottom: "1px solid var(--gray-200)",
+                  height: "38px"
                 }}
               >
                 <span style={{ position: "sticky", left: 5 }}></span>
@@ -372,7 +376,7 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
             </th>
           </tr>}
           <tr>
-            <th style={{...styles.taskTable_th, height: timeInterval === "monthly" ? 37.5 : 25}}>
+            <th style={{...styles.taskTable_th,borderBottom:"none"}}>
               <div
                 style={{
                   display: "flex",
@@ -380,6 +384,8 @@ const TaskTable = ({ tasks, expandedTasks, onToggleExpand, showTaskTable, isTask
                   alignItems: "center",
                   width: "100%",
                   position: "relative",
+                  borderBottom: "1px solid var(--gray-200)",
+                  height: "38px"
                 }}
               >
                 <span style={{ position: "sticky", left: 10 }}>Task Name</span>
@@ -547,37 +553,37 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
     };
   
   
-    const ganttDateRange = (
+    const ganttDateRange = useCallback((
       tasks,
       viewMode,
       preStepsCount
     ) => {
-      let newStartDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].startDate;
-      let newEndDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].finishDate;
+      // let newStartDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].startDate;
+      // let newEndDate = tasks[0].BL_milestoneActivityStartDate || tasks[0].UP_milestoneActivityStartDate || tasks[0].finishDate;
 
-      for (const task of tasks) {
-        // Calculate the minimum start date
-        const taskStartDate = task.BL_milestoneActivityStartDate || task.UP_milestoneActivityStartDate;
-        if (taskStartDate && taskStartDate < newStartDate) {
-          newStartDate = taskStartDate;
-        }
-
-        // Calculate the maximum finish date
-        const taskFinishDate = task.BL_milestoneActivityFinishDate || task.UP_milestoneActivityFinishDate;
-        if (taskFinishDate && taskFinishDate > newEndDate) {
-          newEndDate = taskFinishDate;
-        }
-      }
-      // let newStartDate = tasks[0].startDate;
-      // let newEndDate = tasks[0].startDate;
       // for (const task of tasks) {
-      //   if (task.startDate < newStartDate) {
-      //     newStartDate = task.startDate;
+      //   // Calculate the minimum start date
+      //   const taskStartDate = task.BL_milestoneActivityStartDate || task.UP_milestoneActivityStartDate;
+      //   if (taskStartDate && taskStartDate < newStartDate) {
+      //     newStartDate = taskStartDate;
       //   }
-      //   if (task.finishDate > newEndDate) {
-      //     newEndDate = task.finishDate;
+
+      //   // Calculate the maximum finish date
+      //   const taskFinishDate = task.BL_milestoneActivityFinishDate || task.UP_milestoneActivityFinishDate;
+      //   if (taskFinishDate && taskFinishDate > newEndDate) {
+      //     newEndDate = taskFinishDate;
       //   }
       // }
+      let newStartDate = tasks[0].startDate;
+      let newEndDate = tasks[0].startDate;
+      for (const task of tasks) {
+        if (task.startDate < newStartDate) {
+          newStartDate = task.startDate;
+        }
+        if (task.finishDate > newEndDate) {
+          newEndDate = task.finishDate;
+        }
+      }
       switch (viewMode) {
         case "yearly":
           newStartDate = addToDate(newStartDate, -1, "year");
@@ -635,14 +641,16 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
         //   break;
       }
       return [newStartDate, newEndDate];
-    };  
+    },
+     [] // Empty dependency array, so `ganttDateRange` won't change unless necessary
+  );  
   
     const showTaskTable = (task) => {
       setTask(task);
       setIsTaskClicked(true);
     }
 
-    const flattenTasks = (tasks, result = []) => {
+    const flattenTasks =  useCallback((tasks, result = []) => {
       tasks.forEach(task => {
         result.push(task);
         if (task.children && expandedTasks.includes(task.objectId)) {
@@ -650,7 +658,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
         }
       });
       return result;
-    };
+    },[expandedTasks] // Empty dependency array, so `flattenTasks` won't change unless necessary
+  );
 
     const styleToString = (styleObject) =>
       Object.entries(styleObject)
@@ -715,10 +724,10 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
 
       // Create SVG with the calculated dimensions
       const svg = d3.select(svgRef.current)
-        .attr('width', chartWidth)
-        .attr('height', chartHeight + margin.top + margin.bottom);
+        .attr('width', chartWidth - 45)
+        .attr('height', chartHeight);
       const headerSvg = d3.select(headerSvgRef.current)
-        .attr('width', chartWidth)
+        .attr('width', chartWidth - 45)
         .attr('height', totalHeaderHeight);
 
       // Update time scale with new width
@@ -745,110 +754,143 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
       if (timeInterval === "monthly") {
         headerHeights.year = headerHeights.year + 12.5;
         headerHeights.month = headerHeights.month + 12.5;
+      } else {
+        headerHeights.month = headerHeights.month + 15;
+        headerHeights.day = headerHeights.day + 15;
       }
       // Add year headers
-      const years = d3.timeYear.range(startDate, endDate);
-      headerGroup.append('g')
-        .attr('class', 'year-header')
-        .attr('style',styleToString(styles.year_header))
-        .selectAll('.year-cell')
-        .data(years)
-        .enter()
-        .append('g')
-        .attr('class', 'year-cell')
-        .each(function(d) {
-          const year = d3.select(this);
-          const yearStart = timeScale(d);
-          let yearEndDate = d3.timeYear.offset(d, 1);
-          if (endDate < yearEndDate) {
-            yearEndDate = endDate;
-          }
-          const yearEnd = timeScale(yearEndDate);
-          const yearWidth = yearEnd - yearStart;
-          
-          // Add year background
-          year.append('rect')
-            .attr('x', yearStart)
-            .attr('y', 0)
-            .attr('width', yearWidth)
-            .attr('height', headerHeights.year)
-            .attr('class', 'year-background');
-          // Add year text centered in the visible area
-          year.append('text')
-            .attr('x', function() {
-              return d.getFullYear() === years[0].getFullYear() ? yearStart + yearWidth - 30 : yearStart + 30;
-            })
-            .attr('y', (headerHeights.year / 2) - 5)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', 'middle')
-            .attr('class', 'year-label')
-            .text(d => (d3.timeFormat('%Y')(d)) + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
-
-          // Add vertical separator line
-          year.append('line')
-            .attr('class', 'year-separator')
-            .attr('x1', yearStart)
-            .attr('x2', yearStart)
-            .attr('y1', 0)
-            .attr('y2', headerHeights.year);
-        });
+      if (timeInterval === "monthly") {
+        const years = d3.timeYear.range(startDate, endDate, 1);
+        headerGroup.append('g')
+          .attr('class', 'year-header')
+          .style('fill', isDarkMode ? "#121212" : styles.year_header.fill) 
+          .style('height', styles.year_header.height)
+          .style('stroke', styles.year_header.stroke) 
+          .style('stroke-width', styles.year_header.strokeWidth) 
+          .style('pointer-events', styles.year_header.pointerEvents) 
+          // .attr('style',styleToString(styles.year_header))
+          .selectAll('.year-cell')
+          .data(years)
+          .enter()
+          .append('g')
+          .attr('class', 'year-cell')
+          .each(function(d) {
+            const year = d3.select(this);
+            let yearStartDate = d;
+            const yearStart = timeScale(yearStartDate);
+            let yearEndDate = d3.timeYear.offset(d, 1);
+            if (endDate < yearEndDate) {
+              yearEndDate = endDate;
+            }
+            const yearEnd = timeScale(yearEndDate);
+            const yearWidth = yearEnd - yearStart;
+            
+            // Add year background
+            year.append('rect')
+              .attr('x', yearStart)
+              .attr('y', 0)
+              .attr('width', yearWidth)
+              .attr('height', headerHeights.year)
+              .attr('class', 'year-background');
+            // Add year text centered in the visible area
+            year.append('text')
+              .attr('x', function() {
+                return yearStart + yearWidth / 2;
+              })
+              .attr('y', (headerHeights.year / 2) - 5)
+              .attr('dy', '0.35em')
+              .attr('text-anchor', 'middle')
+              .attr('class', 'year-label')
+              .style('fill', isDarkMode ? "#FFFFFF" : styles.year_header_text.fill)
+              .style('font-size', styles.year_header_text.fontSize)
+              .style('font-weight',styles.year_header_text.fontWeight)
+              .style('pointer-events',styles.year_header_text.pointerEvents)
+              .text(d => (d3.timeFormat('%Y')(d)));
+              // + (d.getFullYear() === years[0].getFullYear() ? " ← " : " → "));
+  
+            // Add vertical separator line
+            year.append('line')
+              .attr('class', 'year-separator')
+              .attr('x1', yearStart)
+              .attr('x2', yearStart)
+              .attr('y1', 0)
+              .attr('y2', headerHeights.year);
+          }); 
+      }
 
       // Add month headers with similar dynamic centering
-      const months = d3.timeMonth.range(startDate, endDate);
-      headerGroup.append('g')
-        .attr('class', 'month-header')
-        .attr('style',styleToString(styles.month_header))
-        .attr('transform', `translate(0,${headerHeights.year})`)
-        .selectAll('.month-cell')
-        .data(months)
-        .enter()
-        .append('g')
-        .attr('class', 'month-cell')
-        .each(function(d) {
-          const month = d3.select(this);
-          const monthStart = timeScale(d);
-          let monthEndDate = d3.timeMonth.offset(d, 1);
-          if (endDate < monthEndDate) {
-            monthEndDate = endDate;
-          }
-          const monthEnd = timeScale(monthEndDate);
-          const monthWidth = monthEnd - monthStart;
-          // Add month background
-          month.append('rect')
-            .attr('x', monthStart)
-            .attr('y', 0)
-            .attr('width', monthWidth)
-            .attr('height', headerHeights.month)
-            .attr('class', isDarkMode?'darkmode-month-background':'month-background')
-            .attr('style', styleToString(isDarkMode ? (styles.darkmode_month_background) : styles.month_background))
-          // Add month text centered
-          month.append('text')
-            .attr('x', function() {
-              return (monthStart + monthWidth / 2);
-            })
-            .attr('y', (headerHeights.month / 2) - 5)
-            .attr('dy', '0.35em')
-            .attr('text-anchor', 'middle')
-            .attr('class', 'month-label')
-            .text(d3.timeFormat('%b')(d));
-
-          // Add separator line
-          month.append('line')
-            .attr('class', 'month-separator')
-            .attr('style',  styleToString(styles.month_separator))
-            .attr('x1', monthStart)
-            .attr('x2', monthStart)
-            .attr('y1', 0)
-            .attr('y2', headerHeights.month);
-        });
+        const months = d3.timeMonth.range(startDate, endDate);
+        headerGroup.append('g')
+          .attr('class', 'month-header')
+          // .attr('style',styleToString(styles.month_header))
+          .style('fill', styles.month_header.fill)
+          .style('height', styles.month_header.height)
+          .style('pointer-events', styles.month_header.pointerEvents)
+          .attr('transform', timeInterval === "monthly" ? `translate(0,${headerHeights.year})` : 'translate(0,0)')
+          .selectAll('.month-cell')
+          .data(months)
+          .enter()
+          .append('g')
+          .attr('class', 'month-cell')
+          .each(function(d) {
+            const month = d3.select(this);
+            const monthStart = timeScale(d);
+            let monthEndDate = d3.timeMonth.offset(d, 1);
+            if (endDate < monthEndDate) {
+              monthEndDate = endDate;
+            }
+            const monthEnd = timeScale(monthEndDate);
+            const monthWidth = monthEnd - monthStart;
+            // Add month background
+            month.append('rect')
+              .attr('x', monthStart)
+              .attr('y', 0)
+              .attr('width', monthWidth)
+              .attr('height', headerHeights.month)
+              // .attr('class', isDarkMode?'darkmode-month-background':'month-background')
+              // .attr('style', styleToString(isDarkMode ? (styles.darkmode_month_background) : styles.month_background))
+              .style('fill', isDarkMode ? "#121212" : styles.month_background.fill) 
+              .style('stroke',styles.month_background.stroke) 
+              .style('stroke-width',styles.month_background.strokeWidth) 
+            // Add month text centered
+            month.append('text')
+              .attr('x', function() {
+                return (monthStart + monthWidth / 2);
+              })
+              .attr('y', (headerHeights.month / 2) - 5)
+              .attr('dy', '0.35em')
+              .attr('text-anchor', 'middle')
+              .attr('class', 'month-label')
+              // .attr('style', styleToString(Object.assign({}, styles.month_label, isDarkMode ? styles.darkmode_month_text : {})))
+              .style('fill', isDarkMode ? "#FFFFFF" : styles.month_label.fill) 
+              .style('font-size', styles.month_label.fontSize)
+              .style('font-weight', styles.month_label.fontWeight)
+              .style('pointer-events', styles.month_label.pointerEvents)
+              .style('user-select', styles.month_label.userSelect)
+              .style('text-anchor', styles.month_label.textAnchor)
+              .style('dominant-baseline', styles.month_label.dominantBaseline)
+              .text(d3.timeFormat(timeInterval === "monthly" ? '%b' : '%b %Y')(d));
+  
+            // Add separator line
+            month.append('line')
+              .attr('class', 'month-separator')
+              // .attr('style',  styleToString(styles.month_separator))
+              .style('stroke', styles.month_separator.stroke)
+              .style('stroke-width', styles.month_separator.strokeWidth)
+              .attr('x1', monthStart)
+              .attr('x2', monthStart)
+              .attr('y1', 0)
+              .attr('y2', headerHeights.month);
+          });
 
       if (timeInterval === "daily") {
         // Add day headers with increased minimum width
         const days = d3.timeDay.range(...timeScale.domain());
         headerGroup.append('g')
-          .attr('class','day-header')
+          // .attr('class','day-header')
+          .attr('height',styles.day_header.height)
           .attr('style',styleToString(styles.day_header))
-          .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
+          .attr('transform', `translate(0,${headerHeights.month})`)
           .selectAll('.day-cell')
           .data(days)
           .enter()
@@ -866,22 +908,33 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
               .attr('width', dayWidth)
               .attr('height', headerHeights.day)
               // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
-              .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+              // .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+              .style('fill', isDarkMode ? "#121212" : styles.day_header_cell.fill)
+              .style('pointer-events', styles.day_header_cell.pointerEvents)
+              .style('stroke', isDarkMode ? "var(--gray-200)" : styles.headerCell.stroke) 
+              .style('stroke-width', styles.headerCell.strokeWidth) 
             g.append('text')
               .attr('x', dayStart + (dayWidth / 2))
               .attr('y', headerHeights.day / 2)
               .attr('dy', '.1em')
               .text(d3.timeFormat('%d')(d))
               // .attr('class', isDarkMode?'darkmode-day-text':'');
-              .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+              // .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+              .style('fill', isDarkMode ? "#FFFFFF" : styles.day_header_text.fill) 
+              .style('font-size', styles.day_header_text.fontSize) 
+              .style('font-weight', styles.day_header_text.fontWeight) 
+              .style('text-anchor', styles.day_header_text.textAnchor) 
+              .style('dominant-baseline', styles.day_header_text.dominantBaseline) 
+              .style('pointer-events', styles.day_header_text.pointerEvents) 
             });
       } else if (timeInterval === "weekly") {
         // Add day headers with increased minimum width
         const days = d3.timeWeek.range(...timeScale.domain());
         headerGroup.append('g')
           .attr('class','day-header')
-          .attr('style',styleToString(styles.day_header))
-          .attr('transform', `translate(0,${headerHeights.year + headerHeights.month})`)
+          // .attr('style',styleToString(styles.day_header))
+          .style('height', styles.day_header.height)
+          .attr('transform', `translate(0,${headerHeights.month})`)
           .selectAll('.day-cell')
           .data(days)
           .enter()
@@ -903,14 +956,24 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
               .attr('width', dayWidth)
               .attr('height', headerHeights.day)
               // .attr('class', isDarkMode?'darkmode-header-cell':'header-cell')
-              .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+              // .attr('style', styleToString(Object.assign({}, styles.headerCell,styles.day_header_cell, isDarkMode ? styles.darkmode_day_header_cell : {})));
+              .style('fill', isDarkMode ? "#121212" : styles.day_header_cell.fill)
+              .style('pointer-events', styles.day_header_cell.pointerEvents)
+              .style('stroke', isDarkMode ? "var(--gray-200)" : styles.headerCell.stroke) 
+              .style('stroke-width', styles.headerCell.strokeWidth) 
             g.append('text')
               .attr('x', dayStart + (dayWidth / 2))
               .attr('y', headerHeights.day / 2)
               .attr('dy', '.1em')
-              .text(`W${+d3.timeFormat("%U")(d) + 1}`)
+              .text(`W${+d3.timeFormat("%U")(d)}`)
               // .attr('class', isDarkMode?'darkmode-day-text':'');
-              .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+              // .attr('style', styleToString(Object.assign({}, styles.day_header_text, isDarkMode ? styles.darkmode_day_header_text : {})));
+              .style('fill', isDarkMode ? "#FFFFFF" : styles.day_header_text.fill) 
+              .style('font-size', styles.day_header_text.fontSize) 
+              .style('font-weight', styles.day_header_text.fontWeight) 
+              .style('text-anchor', styles.day_header_text.textAnchor) 
+              .style('dominant-baseline', styles.day_header_text.dominantBaseline) 
+              .style('pointer-events', styles.day_header_text.pointerEvents)
             });
       }
 
@@ -926,7 +989,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             
             chartGroup.append('path')
               .attr('class', 'milestoneDiamond base')
-              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              .style('fill', styles.milestoneDiamond.fill)
+              .style('opacity', styles.milestoneDiamond.opacity)
+              .style('cursor', styles.milestoneDiamond.cursor)
+              .style('fill', styles.base.fill)
               .attr('d', d3.symbol()
                 .type(d3.symbolDiamond)
                 .size(milestoneSize))
@@ -940,7 +1007,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             
             chartGroup.append('path')
               .attr('class', 'milestoneDiamond base')
-              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond,styles.base)))
+              .style('fill', styles.milestoneDiamond.fill)
+              .style('opacity', styles.milestoneDiamond.opacity)
+              .style('cursor', styles.milestoneDiamond.cursor)
+              .style('fill', styles.base.fill)
               .attr('d', d3.symbol()
                 .type(d3.symbolDiamond)
                 .size(milestoneSize))
@@ -954,7 +1025,10 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             
             chartGroup.append('path')
               .attr('class', 'milestoneDiamond')
-              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              .style('fill', styles.milestoneDiamond.fill)
+              .style('opacity', styles.milestoneDiamond.opacity)
+              .style('cursor', styles.milestoneDiamond.cursor)
               .attr('d', d3.symbol()
                 .type(d3.symbolDiamond)
                 .size(milestoneSize))
@@ -968,7 +1042,10 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             
             chartGroup.append('path')
               .attr('class', 'milestoneDiamond')
-              .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              // .attr('style', styleToString(Object.assign({}, styles.milestoneDiamond)))
+              .style('fill', styles.milestoneDiamond.fill)
+              .style('opacity', styles.milestoneDiamond.opacity)
+              .style('cursor', styles.milestoneDiamond.cursor)
               .attr('d', d3.symbol()
                 .type(d3.symbolDiamond)
                 .size(milestoneSize))
@@ -1012,8 +1089,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           gridLines.append('line')
             .attr('class', isDarkMode ? 'darkmode-grid-line' : 'grid-line')
             // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
-            .attr('x1', timeScale(date))
-            .attr('x2', timeScale(date) + 15)
+            .attr('x1', timeScale(date) - 104)
+            .attr('x2', timeScale(date) - 104)
             .attr('y1', 0)
             .attr('y2', chartHeight)
             .style('stroke', '#f3f4f6')
@@ -1025,8 +1102,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
           gridLines.append('line')
             .attr('class', isDarkMode?'darkmode-grid-line':'grid-line')
             // .attr('style', styleToString(Object.assign({}, styles.grid_line, isDarkMode ? styles.darkmode_grid_line : {})))  
-            .attr('x1', timeScale(date) + -25)
-            .attr('x2', timeScale(date) + -25)
+            .attr('x1', timeScale(date) - 25)
+            .attr('x2', timeScale(date) - 25)
             .attr('y1', 0)
             .attr('y2', chartHeight)
             .style('stroke', '#f3f4f6')
@@ -1041,7 +1118,10 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
             .attr('x1', timeScale(date) + 15)
             .attr('x2', timeScale(date))
             .attr('y1', 0)
-            .attr('y2', chartHeight);
+            .attr('y2', chartHeight)
+            .style('stroke', '#f3f4f6')
+            .style('stroke-width', 1)
+            .style('stroke-dasharray', '2,2');
         });
       }
 
@@ -1250,7 +1330,7 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
     return (
       <>
         <tr>
-          <td style={styles.taskTable_td}>
+          <td>
             {task.children.length > 0 && (
               <span
                 onClick={() => toggleExpandCollapse(task.objectId)}
@@ -1260,33 +1340,18 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, isDarkM
               </span>
             )}
           </td>
-          <td style={styles.taskTable_td}>{task.code}</td>
-          <td style={styles.taskTable_td}>{task.name}</td>
-          <td style={styles.taskTable_td}>{task.projectType}</td>
-          <td style={styles.taskTable_td}>{getFormattedDate(task.startDate)}</td>
-          <td style={styles.taskTable_td}>{getFormattedDate(task.finishDate)}</td>
+          <td>{task.code || task.id}</td>
+          <td>{task.name}</td>
+          <td>{task.projectType}</td>
+          <td>{getFormattedDate(task.startDate)}</td>
+          <td>{getFormattedDate(task.finishDate)}</td>
         </tr>
-        {isExpanded && task.children.length > 0 && (
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Task Code</th>
-                    <th>Task Name</th>
-                    <th>Project Type</th>
-                    <th>Start Date</th>
-                    <th>Finish Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {task.children.map((child, index) => (
-                    <React.Fragment key={index}>
-                      {renderTaskRows(child)}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-        )}
+        {isExpanded &&
+          task.children.map((child, index) => (
+            <React.Fragment key={index}>
+              {renderTaskRows(child)}
+            </React.Fragment>
+          ))}
       </>
     );
   };
