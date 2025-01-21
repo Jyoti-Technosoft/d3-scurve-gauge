@@ -29,6 +29,8 @@ function App() {
         blMilestoneActivity={blMilestoneActivity} 
         upMilestoneActivity={upMilestoneActivity} 
         wbsData={wbsData}
+        baselineActivityMarkerColor={"#1600F0"}
+        updatedActivityMarkerColor={"#E12F23"}
       />
       <Dashboard isDarkMode={isDarkMode} projectInfoData={projectInfoData}/>
       <SCurveChart 

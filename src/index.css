@@ -1,32 +1,3 @@
-:root {
-  /* Base colors */
-  --primary-color: #4f46e5;
-  --primary-light: #818cf8;
-  --success-color: #10b981;
-  --success-light: #34d399;
-  --warning-color: #f59e0b;
-  --warning-light: #fbbf24;
-  --danger-color: #ef4444;
-  --danger-light: #f87171;
-  
-  /* Gray scale */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -34,8 +5,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--gray-50);
-  color: var(--gray-800);
+  background-color: #f9fafb;
+  color: #1f2937;
 }
 
 /* Custom scrollbar for better visibility */
@@ -44,17 +15,17 @@ body {
 }
 
 .chart-container::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
 .chart-container::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
+  background: #d1d5db;
   border-radius: 4px;
 }
 
 .chart-container::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-400);
+  background: #9ca3af;
 }
 
 .chart-container-1::-webkit-scrollbar {
@@ -62,28 +33,22 @@ body {
 }
 
 .chart-container-1::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: #f3f4f6;
   border-radius: 4px;
 }
 
 .chart-container-1::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
+  background: #d1d5db;
   border-radius: 4px;
 }
 
 .chart-container-1::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-400);
+  background: #9ca3af;
 }
 
-.year-cell:first-child .year-separator,
+/* .year-cell:first-child .year-separator,
 .month-cell:first-child .month-separator {
   display: none;
-}
-
-/* Remove any text decoration */
-/* text {
-  text-decoration: none;
-  font-family: inherit;
 } */
 
 /* Scrollbars */
@@ -97,7 +62,7 @@ body {
 .task-table-container::-webkit-scrollbar-track,
 .chart-container::-webkit-scrollbar-track,
 .chart-container-1::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: #f3f4f6;
 }
 
 .task-table-container::-webkit-scrollbar-thumb,
@@ -151,8 +116,8 @@ body {
 } */
 
 .task-table-container::-webkit-scrollbar {
-  width: 0; /* Hide vertical scrollbar in WebKit browsers */
-  height: 10px; /* Show horizontal scrollbar */
+  width: 0; 
+  height: 10px; 
 }
 
 .task-table-container::-webkit-scrollbar-thumb {
@@ -160,5 +125,5 @@ body {
 }
 
 .hidden-scrollbar::-webkit-scrollbar {
-  display: none; /* For Chrome, Safari, and Opera */
+  display: none; 
 }
