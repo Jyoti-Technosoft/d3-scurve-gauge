@@ -486,7 +486,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
       return result;
     }
 
-    return processWBSAndMilestones(result);
+    // return processWBSAndMilestones(result);
+    return result;
   };
 
   const expandInitialTopLevelTasks = (tasksList) => {
@@ -530,11 +531,13 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
                 mapNewMilestones(child.children, newMilestones);
             });
         } else if (newMilestones[item.code]) {
-          let children = [];
-          Object.values(newMilestones[item.code]).forEach(milestone => {
-            children = children.concat(milestone);
-          });
-          item.children = children;
+          // if (item.parentObjectId != null) {
+            let children = [];
+            Object.values(newMilestones[item.code]).forEach(milestone => {
+              children = children.concat(milestone);
+            });
+            item.children = children;
+          // }
         }
     });
   }
@@ -622,7 +625,9 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
   }, []);
 
   const showTaskTable = (task) => {
+    // if ((task.parentObjectId !== null && task.children.length > 0) || task.type === "milestone") {
     setTask(task);
+    // }
     // setIsTaskClicked(true);
   }
 
@@ -1152,8 +1157,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
 
           const tooltipContent = `
           <strong style="font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
-          ${task.UP_milestoneActivityStartDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Start:</span>${task.UP_milestoneActivityStartDate.toLocaleDateString('en-GB')}<br/>`: ''}
-          ${task.UP_milestoneActivityFinishDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate.toLocaleDateString('en-GB')}`: ''}
+          ${task.UP_milestoneActivityStartDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Start Date:</span>${task.UP_milestoneActivityStartDate.toLocaleDateString('en-GB')}<br/>`: ''}
+          ${task.UP_milestoneActivityFinishDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Finish Date' : 'End'}:</span> ${task.UP_milestoneActivityFinishDate.toLocaleDateString('en-GB')}`: ''}
           ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
         `;
 
@@ -1218,8 +1223,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
 
           const tooltipContent = `
           <strong style="font-weight: 600; display: block; margin-bottom: 4px;">${task.name}</strong><br/>
-          ${task.BL_milestoneActivityStartDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Start:</span> ${task.BL_milestoneActivityStartDate.toLocaleDateString('en-GB')}<br/>`: ''}
-          ${task.BL_milestoneActivityFinishDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Due' : 'End'}:</span>${task.BL_milestoneActivityFinishDate.toLocaleDateString('en-GB')}`: ''}
+          ${task.BL_milestoneActivityStartDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Start Date:</span> ${task.BL_milestoneActivityStartDate.toLocaleDateString('en-GB')}<br/>`: ''}
+          ${task.BL_milestoneActivityFinishDate ? `<span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">${task.type === 'milestone' ? 'Finish Date' : 'End'}:</span>${task.BL_milestoneActivityFinishDate.toLocaleDateString('en-GB')}`: ''}
           ${task.type !== 'milestone' ? `<br/><span class="tooltip-label" style="font-weight: 500; margin-right: 4px;">Duration:</span> ${Math.ceil((task.finishDate - task.startDate) / (1000 * 60 * 60 * 24))} days` : ''}
         `;
           const tooltipWidth = 200;
@@ -1379,8 +1384,8 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
           <td style={styles.taskDataTable_td}> {task.BL_milestoneActivityFinishDate ? "Finish Milestone" : "Start Milestone"}</td>
           <td style={styles.taskDataTable_td}> {formatDateTime(task.BL_milestoneActivityStartDate)} </td>
           <td style={styles.taskDataTable_td}> {formatDateTime(task.BL_milestoneActivityFinishDate)} </td> 
-          <td style={styles.taskDataTable_td}> {formatDateTime(task.startDate)} </td>
-          <td style={styles.taskDataTable_td}> {formatDateTime(task.finishDate)} </td>
+          <td style={styles.taskDataTable_td}> {formatDateTime(task.UP_milestoneActivityStartDate)} </td>
+          <td style={styles.taskDataTable_td}> {formatDateTime(task.UP_milestoneActivityFinishDate)} </td>
         </tr>
       }
           {
@@ -1398,11 +1403,11 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
         <div style={styles.ganttCharts}>
           <div style={styles.legendButton}>
             <span style={{ ...styles.legendIconBase, backgroundColor: baselineActivityMarkerColor }}></span>
-            Baseline
+            Baseline Dates
           </div>
           <div style={styles.legendButton}>
             <span style={{ ...styles.legendIconBase, backgroundColor: updatedActivityMarkerColor }}></span>
-            Updated
+            Updated Dates
           </div>
         </div>
         <div style={styles.dropdownContainer}>
@@ -1451,6 +1456,7 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
           </div>
         </div>
       </div>
+      {task && <h3>MILESTONE</h3>}
       {task && (
         <table style={styles.taskTable} className="task-table">
           <thead style={{ ...styles.taskTable_head, height: "50px", background: "#07545e", color: "#FFFFFF" }}>
