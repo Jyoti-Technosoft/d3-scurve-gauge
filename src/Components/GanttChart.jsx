@@ -241,7 +241,7 @@ const styles = {
     backgroundColor: "#4E91FD",
   },
   taskDataTable_th: {
-    verticalAlign: "top",
+    verticalAlign: "middle",
     paddingTop: "5px",
     textAlign: "center"
   },
