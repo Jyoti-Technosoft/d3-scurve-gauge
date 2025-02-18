@@ -8,8 +8,11 @@ import data from "./Json/spread-period.json";
 import projectInfoData from "./Json/project-info.json";
 import blMilestoneActivity from "./Json/BL-milestoneActivity.json";
 import upMilestoneActivity from "./Json/UP-milestoneActivity.json";
+import cumulativeResourceSpreadPeriodList from "./Json/cumulativeResourceSpreadPeriodList.json";
+// import tabularResourceSpreadPeriodList from "./Json/tabularResourceSpreadPeriodList.json";
 import wbsData from "./Json/wbsFile.json";
 import "./App.css";
+import HistogramWithSCurve from "./Components/HistogramWithSCurve";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -24,6 +27,15 @@ function App() {
           {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
         </button>
       </div>
+      <HistogramWithSCurve 
+        isDarkMode={isDarkMode}
+        data={cumulativeResourceSpreadPeriodList}
+        chartTitle="S-Curve"
+        xAxisTitle="Dates"
+        yAxisTitleLeft="Planned Unit"
+        yAxisTitleRight="Planned Unit"
+        projectInfoData={projectInfoData}
+      />
       <GanttChart 
         isDarkMode={isDarkMode} 
         blMilestoneActivity={blMilestoneActivity} 
