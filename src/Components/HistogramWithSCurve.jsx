@@ -63,44 +63,41 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
 
-  const actualData =
-    data.filter((d) => d.projectType === "UPDATED_PROJECT") || [];
-  const plannedData =
-    data.filter((d) => d.projectType === "BASELINE_PROJECT") || [];
-
-  const transformData = (planned, actual, timeInterval) => {
-    const plannedPoints = groupData(data, timeInterval);
-    const actualPoints = groupData(data, timeInterval);
-    return { plannedPoints, actualPoints };
-  };
-
-  const groupData = (data, interval) => {
+  const groupDataUpdated = (data, interval) => {
     const groupedData = d3.group(data, (d) => {
-      const date = new Date(d.startDate);
-      if (interval === "daily") {
-        return new Date(d3.timeFormat("%Y-%m-%d")(date));
-      } else if (interval === "weekly") {
-        const weekStart = d3.timeFriday(date);
-        return new Date(d3.timeFormat("%Y-%m-%d")(weekStart));
-      } else if (interval === "monthly") {
-        return new Date(d3.timeFormat("%Y-%m")(date));
-      }
+        const date = new Date(d.startDate);
+        if (interval === "daily") {
+            return new Date(d3.timeFormat("%Y-%m-%d")(date));
+        } else if (interval === "weekly") {
+            const weekStart = d3.timeMonday(date); // Start from Monday for weekly grouping
+            return new Date(d3.timeFormat("%Y-%m-%d")(weekStart));
+        } else if (interval === "monthly") {
+            return new Date(d3.timeFormat("%Y-%m")(date));
+        }
     });
 
     return Array.from(groupedData, ([key, values]) => {
-      const totalPlanned = d3.sum(values, (d) =>
-        d.cumSumPlannedLabourUnit
-      );
-      if (values && values[values.length - 1].startDate) {
-        key = values[values.length - 1].startDate;
-      }
-      return { date: new Date(key), value: totalPlanned };
+        const aggregated = { date: new Date(key) };
+        values.forEach(d => {
+            for (const measure of Object.keys(d)) {
+                if (measure.startsWith('cumSum')) {
+                    aggregated[measure] = (aggregated[measure] || 0) + d[measure];
+                }
+            }
+            // Map resourceId to corresponding measure values for stacked chart
+            aggregated[d.resourceId] = aggregated[d.resourceId] || {};
+            for (const measure of Object.keys(d)) {
+                if (measure.startsWith('cumSum')) {
+                    aggregated[d.resourceId][measure] = (aggregated[d.resourceId][measure] || 0) + d[measure];
+                }
+            }
+        });
+        if (values && values[values.length - 1].startDate) {
+            aggregated.date = new Date(values[values.length - 1].startDate);
+        }
+        return aggregated;
     });
   };
-
-//   const calculateVariance = (planned, actual) => {
-//     return actual - planned;
-//   };
 
   const getActualPlannedYPoints = (plannedPoints, actualPoints, xDate) => {
     const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
@@ -108,16 +105,16 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
         ? curr
         : prev;
     });
-    const closestActualPoint = actualPoints.reduce((prev, curr) => {
-      return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
-        ? curr
-        : prev;
-    });
+    // const closestActualPoint = actualPoints.reduce((prev, curr) => {
+    //   return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
+    //     ? curr
+    //     : prev;
+    // });
     const yValuePlanned = closestPlannedPoint
-      ? closestPlannedPoint.value
+      ? closestPlannedPoint.cumSumPlannedLabourUnit
       : null;
-    const yValueActual = closestActualPoint ? closestActualPoint.value : null;
-    return {yValuePlanned, yValueActual};
+    // const yValueActual = closestActualPoint ? closestActualPoint.value : null;
+    return {yValuePlanned};
   }
 
   const updateDimensions = () => {
@@ -144,11 +141,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
   }, []);
 
   useEffect(() => {
-    const { plannedPoints, actualPoints } = transformData(
-      plannedData,
-      actualData,
-      timeInterval
-    );
+    const groupDataUpdat = groupDataUpdated(data, timeInterval);
     const height = 420;
     const marginTop = 20;
     const marginRight = 20;
@@ -158,19 +151,30 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
     if (timeInterval !== "daily") {
       tickWidth = 30;
     }
-    const totalWidth = dimensions.width > (plannedPoints.length * tickWidth ) ? dimensions.width : (plannedPoints.length * tickWidth );
+    const resourceIds = Array.from(new Set(data.map(d => d.resourceId)));
+
+    const stack = d3.stack()
+      .keys(resourceIds)
+      .value((d, key) => d[key]?.cumSumPlannedLabourUnit || 0);
+
+    const stackedData = stack(groupDataUpdat);
+    const color = d3.scaleOrdinal(d3.schemeCategory10).domain(resourceIds);
+
+    const totalWidth = dimensions.width > (groupDataUpdat.length * tickWidth ) ? dimensions.width : (groupDataUpdat.length * tickWidth );
     const xScale = d3
       .scaleTime()
-      .domain(d3.extent([...plannedPoints], (d) => d.date))
+      .domain(d3.extent([...groupDataUpdat], (d) => d.date))
       .range([marginLeft, totalWidth - marginRight]);
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max([...plannedPoints], (d) => Math.max(d.value, 100))])
+      .domain([0, d3.max([...groupDataUpdat], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
+      .nice()
       .range([height - marginBottom, marginTop]);
     const yScaleRight = d3
       .scaleLinear()
-      .domain([0, d3.max([...plannedPoints], (d) => Math.max(d.value, 100))])
-      .range([height- marginBottom, marginTop]);
+      .domain([0, d3.max([...groupDataUpdat], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
+      .nice()
+      .range([height - marginBottom, marginTop]);
 
     // Clear previous chart content
     d3.select(chartRef.current).selectAll("*").remove();
@@ -342,10 +346,10 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
 
     const linePlanned = d3
       .line().x((d) => xScale(d.date))
-      .y((d) => yScale(d.value));
+      .y((d) => yScale(d.cumSumPlannedLabourUnit));
     svg
       .append("path")
-      .datum(plannedPoints)
+      .datum(groupDataUpdat)
       .attr("class", "line planned")
       .attr("d", linePlanned)
       .attr("fill", "none")
@@ -357,7 +361,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
       .on("mousemove", function (event) {
         const [mouseX] = d3.pointer(event);
         const xDate = xScale.invert(mouseX);
-        const { yValuePlanned } = getActualPlannedYPoints(plannedPoints, actualPoints, xDate);
+        const { yValuePlanned } = getActualPlannedYPoints(groupDataUpdat, groupDataUpdat, xDate);
   
         tooltip
           .html(`
@@ -371,6 +375,73 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
       })
       .on("mouseout", function () {
         tooltip.style("visibility", "hidden");
+      });
+
+      // Draw the bars
+      svg.selectAll('.layer')
+        .data(stackedData)
+        .enter().append('g')
+        .attr('class', 'layer')
+        .attr('fill', d => {
+          return color(d.key)
+        })
+        .selectAll('rect')
+        .data(d => d)
+        .enter().append('rect')
+        .attr('x', d => xScale(new Date(d.data.date)))
+        .attr('y', d => yScale(d[1]))
+        .attr('height', d => yScale(d[0]) - yScale(d[1]))
+        .attr('width', xScale(new Date(groupDataUpdat[1]?.date)) - xScale(new Date(groupDataUpdat[0]?.date)) - (timeInterval !== "monthly" ? 3 : 10))
+        .on('mouseover', function(event, d) {
+            const resource = d3.select(this.parentNode).datum().key;
+            const value = d[1] - d[0];
+            d3.selectAll(".tooltip").remove();
+            d3.select('body').append('div')
+                .attr('class', 'tooltip')
+                .style('position', 'absolute')
+                .style('pointer-events', 'none')
+                .html(`<strong>Resource Name:</strong> ${resource}<br><strong>Units:</strong> ${value.toFixed(2)}
+                <br><strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(d.data.date)}`)
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY - 20}px`)
+                .style("background-color", "white")
+                .style("border", "1px solid #ccc")
+                .style("border-radius", "4px")
+                .style("font-size", "14px")
+                .style("padding", "10px")
+                .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)")
+                .style("z-index", 1);
+        })
+        .on('mouseout', function() {
+            d3.select('.tooltip').remove();
+        });
+
+      groupDataUpdat.forEach(d => {
+          const total = resourceIds.reduce((sum, key) => sum + (d[key]?.cumSumPlannedLabourUnit || 0), 0);
+          svg.append('text')
+              .attr('x', xScale(new Date(d.date)) + 10.5)
+              .attr('y', yScale(total) - 3)
+              .attr('text-anchor', 'middle')
+              .attr('fill', isDarkMode ? 'white' : 'black')
+              .text(total.toFixed(2))
+              .style('font-size', 10);
+      });
+
+      // Add legend
+      const legend = parentSVG.append('g')
+      .attr('transform', `translate(${parentSVG.attr("width") - 100},0)`);
+
+      resourceIds.forEach((key, i) => {
+        const g = legend.append('g').attr('transform', `translate(0,${i * 20})`);
+        g.append('rect')
+            .attr('width', 10)
+            .attr('height', 10)
+            .attr('fill', color(key));
+        g.append('text')
+            .attr('x', 15)
+            .attr('y', 10)
+            .attr('fill', isDarkMode ? 'white' : 'black')
+            .text(key);
       });
 
   // If required to scroll to the end as initial position enable below line

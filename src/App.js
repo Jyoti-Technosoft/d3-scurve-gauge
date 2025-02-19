@@ -30,7 +30,7 @@ function App() {
       <HistogramWithSCurve 
         isDarkMode={isDarkMode}
         data={cumulativeResourceSpreadPeriodList}
-        chartTitle="S-Curve"
+        chartTitle="Histogram Chart"
         xAxisTitle="Dates"
         yAxisTitleLeft="Planned Unit"
         yAxisTitleRight="Planned Unit"
