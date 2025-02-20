@@ -39,6 +39,8 @@ const styles = {
     backgroundColor: "#2F5233",
   },
   dropdownContainer: {
+    display: "flex",
+    alignItems: "center",
     margin: "20px 0",
     textAlign: "center",
   },
@@ -62,8 +64,13 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
   const [timeInterval, setTimeInterval] = useState("daily");
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedValue, setSelectedValue] = useState('histogram');
 
-  const groupDataUpdated = (data, interval) => {
+  const handleChangeRadio = (event) => {
+    setSelectedValue(event.target.value);
+  };
+
+  const groupData = (data, interval) => {
     const groupedData = d3.group(data, (d) => {
         const date = new Date(d.startDate);
         if (interval === "daily") {
@@ -75,13 +82,21 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
             return new Date(d3.timeFormat("%Y-%m")(date));
         }
     });
-
+    
+    const runningTotals = {};
     return Array.from(groupedData, ([key, values]) => {
         const aggregated = { date: new Date(key) };
         values.forEach(d => {
             for (const measure of Object.keys(d)) {
                 if (measure.startsWith('cumSum')) {
+                  if (selectedValue === "scurve") {
+                    runningTotals[measure] = (runningTotals[measure] || 0) + d[measure];
+
+                    // Assign cumulative sum
+                    aggregated[measure] = runningTotals[measure];
+                  } else {
                     aggregated[measure] = (aggregated[measure] || 0) + d[measure];
+                  }
                 }
             }
             // Map resourceId to corresponding measure values for stacked chart
@@ -141,38 +156,53 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
   }, []);
 
   useEffect(() => {
-    const groupDataUpdat = groupDataUpdated(data, timeInterval);
+    const groupDataPoints = groupData(data, timeInterval);
     const height = 420;
     const marginTop = 20;
     const marginRight = 20;
     const marginBottom = 30;
     const marginLeft = 30;
-    let tickWidth = 20;
+    let tickWidth = 50;
     if (timeInterval !== "daily") {
-      tickWidth = 30;
+      tickWidth = 60;
     }
     const resourceIds = Array.from(new Set(data.map(d => d.resourceId)));
 
-    const stack = d3.stack()
+    const stackPlanned = d3.stack()
       .keys(resourceIds)
       .value((d, key) => d[key]?.cumSumPlannedLabourUnit || 0);
+    const stackActual = d3.stack()
+      .keys(resourceIds)
+      .value((d, key) => d[key]?.cumSumActualLabourUnit || 0);
 
-    const stackedData = stack(groupDataUpdat);
+
+    const stackedDataPlanned = stackPlanned(groupDataPoints);
+    const stackedDataActual = stackActual(groupDataPoints);
     const color = d3.scaleOrdinal(d3.schemeCategory10).domain(resourceIds);
 
-    const totalWidth = dimensions.width > (groupDataUpdat.length * tickWidth ) ? dimensions.width : (groupDataUpdat.length * tickWidth );
+    const totalWidth = dimensions.width > (groupDataPoints.length * tickWidth ) ? dimensions.width : (groupDataPoints.length * tickWidth );
+    const extent = d3.extent([...groupDataPoints], d => d.date);
+    let startDate;
+    if (timeInterval === "daily") {
+      startDate = d3.timeDay.offset(extent[0], -1); // one day earlier
+    } else if (timeInterval === "weekly") {
+      startDate = d3.timeWeek.offset(extent[0], -1); // one week earlier
+    } else if (timeInterval === "monthly") {
+      startDate = d3.timeMonth.offset(extent[0], -1); // one month earlier
+    }
+    const endDate = extent[1];
     const xScale = d3
       .scaleTime()
-      .domain(d3.extent([...groupDataUpdat], (d) => d.date))
+      .domain([startDate, endDate])
       .range([marginLeft, totalWidth - marginRight]);
     const yScale = d3
       .scaleLinear()
-      .domain([0, d3.max([...groupDataUpdat], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
+      .domain([0, d3.max([...groupDataPoints], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
       .nice()
       .range([height - marginBottom, marginTop]);
     const yScaleRight = d3
       .scaleLinear()
-      .domain([0, d3.max([...groupDataUpdat], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
+      .domain([0, d3.max([...groupDataPoints], (d) => Math.max(d.cumSumPlannedLabourUnit, d.cumSumActualLabourUnit))])
       .nice()
       .range([height - marginBottom, marginTop]);
 
@@ -344,110 +374,158 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
       .style("fill", "none")
       .style("pointer-events", "all")
 
-    const linePlanned = d3
-      .line().x((d) => xScale(d.date))
-      .y((d) => yScale(d.cumSumPlannedLabourUnit));
-    svg
-      .append("path")
-      .datum(groupDataUpdat)
-      .attr("class", "line planned")
-      .attr("d", linePlanned)
-      .attr("fill", "none")
-      .attr("stroke", plannedPointsColor)
-      .attr("stroke-width", 4)
-      .on("mouseenter", function () {
-        tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
-      })
-      .on("mousemove", function (event) {
-        const [mouseX] = d3.pointer(event);
-        const xDate = xScale.invert(mouseX);
-        const { yValuePlanned } = getActualPlannedYPoints(groupDataUpdat, groupDataUpdat, xDate);
-  
-        tooltip
-          .html(`
-            <strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(xDate)}<br>
-            <strong>Planned Units:</strong> ${yValuePlanned.toFixed(2)}<br>
-          `)
-          .style("left", `${event.pageX + 10}px`) // Offset slightly to the right
-          .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
-          .style("display", "block")
-          .style("visibility", "visible");
-      })
-      .on("mouseout", function () {
-        tooltip.style("visibility", "hidden");
-      });
+      if (selectedValue === "scurve") {
+        const linePlanned = d3
+        .line().x((d) => xScale(d.date))
+        .y((d) => yScaleRight(d.cumSumPlannedLabourUnit));
+        svg
+          .append("path")
+          .datum(groupDataPoints)
+          .attr("class", "line planned")
+          .attr("d", linePlanned)
+          .attr("fill", "none")
+          .attr("stroke", plannedPointsColor)
+          .attr("stroke-width", 4)
+          .on("mouseenter", function () {
+            tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
+          })
+          .on("mousemove", function (event) {
+            const [mouseX] = d3.pointer(event);
+            const xDate = xScale.invert(mouseX);
+            const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, groupDataPoints, xDate);
+      
+            tooltip
+              .html(`
+                <strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(xDate)}<br>
+                <strong>Planned Units:</strong> ${yValuePlanned.toFixed(2)}<br>
+              `)
+              .style("left", `${event.pageX + 10}px`) // Offset slightly to the right
+              .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
+              .style("display", "block")
+              .style("visibility", "visible");
+          })
+          .on("mouseout", function () {
+            tooltip.style("visibility", "hidden");
+          });
+      }
 
       // Draw the bars
-      svg.selectAll('.layer')
-        .data(stackedData)
-        .enter().append('g')
-        .attr('class', 'layer')
-        .attr('fill', d => {
-          return color(d.key)
-        })
-        .selectAll('rect')
-        .data(d => d)
-        .enter().append('rect')
-        .attr('x', d => xScale(new Date(d.data.date)))
-        .attr('y', d => yScale(d[1]))
-        .attr('height', d => yScale(d[0]) - yScale(d[1]))
-        .attr('width', xScale(new Date(groupDataUpdat[1]?.date)) - xScale(new Date(groupDataUpdat[0]?.date)) - (timeInterval !== "monthly" ? 3 : 10))
-        .on('mouseover', function(event, d) {
-            const resource = d3.select(this.parentNode).datum().key;
-            const value = d[1] - d[0];
-            d3.selectAll(".tooltip").remove();
-            d3.select('body').append('div')
-                .attr('class', 'tooltip')
-                .style('position', 'absolute')
-                .style('pointer-events', 'none')
-                .html(`<strong>Resource Name:</strong> ${resource}<br><strong>Units:</strong> ${value.toFixed(2)}
-                <br><strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(d.data.date)}`)
-                .style('left', `${event.pageX + 10}px`)
-                .style('top', `${event.pageY - 20}px`)
-                .style("background-color", "white")
-                .style("border", "1px solid #ccc")
-                .style("border-radius", "4px")
-                .style("font-size", "14px")
-                .style("padding", "10px")
-                .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)")
-                .style("z-index", 1);
-        })
-        .on('mouseout', function() {
-            d3.select('.tooltip').remove();
-        });
-
-      groupDataUpdat.forEach(d => {
-          const total = resourceIds.reduce((sum, key) => sum + (d[key]?.cumSumPlannedLabourUnit || 0), 0);
+      if (selectedValue === "histogram") {
+        svg.selectAll('.layer')
+          .data(stackedDataPlanned)
+          .enter().append('g')
+          .attr('class', 'layer')
+          .attr('fill', d => {
+            return color(d.key)
+          })
+          .selectAll('rect')
+          .data(d => d)
+          .enter().append('rect')
+          .attr('x', d => xScale(new Date(d.data.date)))
+          .attr('y', d => yScale(d[1]))
+          .attr('height', d => yScale(d[0]) - yScale(d[1]))
+          .attr('width', xScale(new Date(groupDataPoints[1]?.date)) - xScale(new Date(groupDataPoints[0]?.date)) - (timeInterval !== "monthly" ? 3 : 10))
+          .on('mouseover', function(event, d) {
+              const resource = d3.select(this.parentNode).datum().key;
+              const value = d[1] - d[0];
+              d3.selectAll(".tooltip").remove();
+              d3.select('body').append('div')
+                  .attr('class', 'tooltip')
+                  .style('position', 'absolute')
+                  .style('pointer-events', 'none')
+                  .html(`<strong>Resource Name:</strong> ${resource}<br><strong>Units:</strong> ${value.toFixed(2)}
+                  <br><strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(d.data.date)}`)
+                  .style('left', `${event.pageX + 10}px`)
+                  .style('top', `${event.pageY - 20}px`)
+                  .style("background-color", "white")
+                  .style("border", "1px solid #ccc")
+                  .style("border-radius", "4px")
+                  .style("font-size", "14px")
+                  .style("padding", "10px")
+                  .style("box-shadow", "0 0 5px rgba(0,0,0,0.3)")
+                  .style("z-index", 1);
+          })
+          .on('mouseout', function() {
+              d3.select('.tooltip').remove();
+          });
+        // Overall Value Adding on each bar
+        groupDataPoints.forEach(d => {
+          let total = resourceIds.reduce((sum, key) => sum + (d[key]?.cumSumPlannedLabourUnit || 0), 0);
+          total = total.toFixed(2);
+          const totalYValue = total;
+          if (total >= 1e9) {
+            total = `${(total / 1e9).toFixed(2)}B`;
+          } else if (total >= 1e6) {
+            total = `${(total / 1e6).toFixed(2)}M`;
+          } else if (total >= 1e3) {
+            total = `${(total / 1e3).toFixed(2)}K`;
+          } else {
+            total = `${total}`;
+          }
           svg.append('text')
-              .attr('x', xScale(new Date(d.date)) + 10.5)
-              .attr('y', yScale(total) - 3)
+              .attr('x', xScale(new Date(d.date)) + (timeInterval !== "daily" ? 30 : 16))
+              .attr('y', yScale(totalYValue) - 3)
               .attr('text-anchor', 'middle')
               .attr('fill', isDarkMode ? 'white' : 'black')
-              .text(total.toFixed(2))
+              .text(total)
               .style('font-size', 10);
-      });
+        });
+      }
 
-      // Add legend
-      const legend = parentSVG.append('g')
-      .attr('transform', `translate(${parentSVG.attr("width") - 100},0)`);
-
-      resourceIds.forEach((key, i) => {
-        const g = legend.append('g').attr('transform', `translate(0,${i * 20})`);
-        g.append('rect')
-            .attr('width', 10)
-            .attr('height', 10)
-            .attr('fill', color(key));
-        g.append('text')
-            .attr('x', 15)
-            .attr('y', 10)
-            .attr('fill', isDarkMode ? 'white' : 'black')
+      d3.select(".legends").selectAll("*").remove();
+      const legendContainer = d3.select(".legends");
+      legendContainer.style("max-height", height + "px");
+      if (selectedValue === "histogram") {
+        resourceIds.forEach((key) => {
+          // Create a container div for each legend item
+          const legendItem = legendContainer.append("div")
+            .attr("class", "legend-item")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("margin-bottom", "5px");
+        
+          // Append a span for the color box
+          legendItem.append("span")
+            .attr("class", "legend-color")
+            .style("display", "inline-block")
+            .style("width", "10px")
+            .style("height", "10px")
+            .style("background-color", color(key))
+            .style("margin-right", "5px");
+        
+          // Append a span for the label text
+          legendItem.append("span")
+            .attr("class", "legend-label")
+            .style("color", isDarkMode ? "white" : "black")
             .text(key);
-      });
+        });
+      } else if (selectedValue === "scurve") {
+        const legendItem = legendContainer.append("div")
+            .attr("class", "legend-item")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("margin-bottom", "5px");
+        
+          // Append a span for the color box
+          legendItem.append("span")
+            .attr("class", "legend-color")
+            .style("display", "inline-block")
+            .style("width", "10px")
+            .style("height", "10px")
+            .style("background-color", plannedPointsColor)
+            .style("margin-right", "5px");
+        
+          // Append a span for the label text
+          legendItem.append("span")
+            .attr("class", "legend-label")
+            .style("color", isDarkMode ? "white" : "black")
+            .text("Planned Units");
+      }
 
   // If required to scroll to the end as initial position enable below line
   // body.node().scrollBy(totalWidth, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeInterval, dimensions, isDarkMode]);
+  }, [timeInterval, dimensions, isDarkMode, selectedValue]);
 
   return (
     <div className={`wrapper ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
@@ -455,12 +533,28 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
         <h3 style={styles.chartTitle}>{chartTitle}</h3>
         <div style={styles.legendFilter}>
           <div style={styles.legends}>
-            <div style={styles.legend}>
-              <span style={{ ...styles.legendIcon, ...styles.legendIconPlanned }}></span>
-              Planned Units
-            </div>
           </div>
           <div style={styles.dropdownContainer}>
+            <div style={{ marginRight: "10px" }}>
+              <label>
+                <input
+                  type="radio"
+                  value="histogram"
+                  checked={selectedValue === "histogram"}
+                  onChange={handleChangeRadio}
+                />
+                Histogram Chart
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  value="scurve"
+                  checked={selectedValue === "scurve"}
+                  onChange={handleChangeRadio}
+                />
+                S-Curve Chart
+              </label>
+            </div>
             <select
               value={timeInterval}
               onChange={(e) => setTimeInterval(e.target.value)}
@@ -472,7 +566,10 @@ const HistogramWithSCurve = ({ isDarkMode, data, chartTitle, xAxisTitle, yAxisTi
             </select>
           </div>
         </div>
-        <div ref={chartRef} style={{ position: "relative", width: "90%", margin: "auto" }} />
+        <div className="chart" style={{ display: "flex" }}>
+          <div ref={chartRef} style={{ position: "relative", width: "80%", margin: "auto" }} />
+          <div className="legends"></div>
+        </div>
       </div>
     </div>
   );
