@@ -9,7 +9,7 @@ import projectInfoData from "./Json/project-info.json";
 import blMilestoneActivity from "./Json/BL-milestoneActivity.json";
 import upMilestoneActivity from "./Json/UP-milestoneActivity.json";
 import cumulativeResourceSpreadPeriodList from "./Json/cumulativeResourceSpreadPeriodList.json";
-// import tabularResourceSpreadPeriodList from "./Json/tabularResourceSpreadPeriodList.json";
+import tabularResourceSpreadPeriodList from "./Json/tabularResourceSpreadPeriodList.json";
 import wbsData from "./Json/wbsFile.json";
 import "./App.css";
 import HistogramWithSCurve from "./Components/HistogramWithSCurve";
@@ -30,6 +30,7 @@ function App() {
       <HistogramWithSCurve 
         isDarkMode={isDarkMode}
         data={cumulativeResourceSpreadPeriodList}
+        tabularResourceSpreadPeriodList={tabularResourceSpreadPeriodList}
         chartTitle="Histogram Chart"
         xAxisTitle="Dates"
         yAxisTitleLeft="Planned Unit"
