@@ -94,7 +94,13 @@ const styles = {
   }
 };
 
-const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, plannedPointsColor = "#00ff00",  actualPointsColor= "#2F5233" }) => {
+const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList, chartTitle, xAxisTitle, yAxisTitleLeft, yAxisTitleRight, projectInfoData, plannedPointsColor = "#00ff00",  actualPointsColor= "#2F5233" }) => {
+
+  function toDateOnly(dateInput) {
+    const date = new Date(dateInput);
+    date.setHours(0, 0, 0, 0); // Reset time to 00:00:00
+    return date;
+  }
 
   const groupData = (data, interval, renderChartType) => {
     const groupedData = d3.group(data, (d) => {
@@ -110,17 +116,21 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
     });
     
     const runningTotals = {};
-    return Array.from(groupedData, ([key, values]) => {
+    let points = Array.from(groupedData, ([key, values]) => {
         const aggregated = { date: new Date(key) };
         values.forEach(d => {
             for (const measure of Object.keys(d)) {
                 if (measure.startsWith('cumSum')) {
                   const chartType = renderChartType || selectedValue;
                   if (chartType === "scurve") {
-                    runningTotals[measure] = (runningTotals[measure] || 0) + d[measure];
+                    if (toDateOnly(projectInfoData.statusDate) >= toDateOnly(d.startDate) || measure.startsWith("cumSumPlanned")) {
+                      runningTotals[measure] = (runningTotals[measure] || 0) + d[measure];
 
-                    // Assign cumulative sum
-                    aggregated[measure] = runningTotals[measure];
+                      // Assign cumulative sum
+                      aggregated[measure] = runningTotals[measure];
+                    } else {
+                      aggregated[measure] = d[measure];
+                    }
                   } else {
                     aggregated[measure] = (aggregated[measure] || 0) + d[measure];
                   }
@@ -139,6 +149,10 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
         }
         return aggregated;
     });
+    if (interval === "monthly" && (renderChartType === "scurve" || selectedValue === "scurve")) {
+      points = [{date: new Date(data[0].startDate), ...data[0]}, ...points];
+    }
+    return points;
   };
 
   const transformDataForTable = (data, interval) => {
@@ -155,9 +169,12 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
     });
 
     return Array.from(groupedData, ([key, values]) => {
-      const totalPlanned = d3.sum(values, (d) => d.sumPlannedLabourUnit);
-      const totalActual = d3.sum(values, (d) => d.sumActualLabourUnit);
-      return { date: new Date(key), sumPlannedLabourUnit: totalPlanned, sumActualLabourUnit: totalActual };
+      // const totalPlanned = d3.sum(values, (d) => d.sumPlannedLabourUnit);
+      // const totalActual = d3.sum(values, (d) => d.sumActualLabourUnit);
+      // return { date: new Date(key), sumPlannedLabourUnit: totalPlanned, sumActualLabourUnit: totalActual };
+      return { date: new Date(key), 
+        cumSumPlannedLabourUnit: values[values.length - 1].sumPlannedLabourUnit > 0 ? values[values.length - 1].cumSumPlannedLabourUnit : 0,
+        cumSumActualLabourUnit: values[values.length - 1].sumActualLabourUnit > 0 ? values[values.length - 1].cumSumActualLabourUnit : 0};
     });
   };
 
@@ -167,21 +184,20 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
       return d3.timeFormat("%d %b %Y")(date);
     } else if (timeInterval === "weekly") {
       const weekStart = d3.timeMonday(date);
-      const weekEnd = d3.timeFriday(date);
-    
+      const weekEnd = d3.timeDay.offset(weekStart, 6); // Sunday is 6 days after Monday
       const format = d3.timeFormat("%d %b %Y");
       const startString = format(weekStart);
       const endString   = format(weekEnd);
-        return `${startString} - ${endString}`;
+      return `${startString} - ${endString}`;
     } else if (timeInterval === "monthly") {
-        return d3.timeFormat("%b %Y")(date);
+      return d3.timeFormat("%b %Y")(date);
     }
   }
 
   const chartRef = useRef();
   const [selectedValue, setSelectedValue] = useState('histogram');
   const [timeInterval, setTimeInterval] = useState("daily");
-  const [groupDataPoints, setGroupDataPoints] = useState(groupData(data, "daily"));
+  const [groupDataPoints, setGroupDataPoints] = useState(groupData(data, 'daily', 'histogram'));
   const [tableData, setTableData] = useState(transformDataForTable(tabularResourceSpreadPeriodList, "daily"));
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   const [isMobile, setIsMobile] = useState(false);
@@ -198,14 +214,14 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
     setTimeInterval(timeInterval);
   }
 
-  const getActualPlannedYPoints = (plannedPoints, xDate) => {
+  const getActualPlannedYPoints = (plannedPoints, xDate, isPlanned) => {
     const closestPlannedPoint = plannedPoints.reduce((prev, curr) => {
       return Math.abs(curr.date - xDate) < Math.abs(prev.date - xDate)
         ? curr
         : prev;
     });
     const yValuePlanned = closestPlannedPoint
-      ? closestPlannedPoint.cumSumPlannedLabourUnit
+      ? (isPlanned ? closestPlannedPoint.cumSumPlannedLabourUnit : closestPlannedPoint.cumSumActualLabourUnit)
       : null;
     return {yValuePlanned};
   }
@@ -486,7 +502,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
           .on("mousemove", function (event) {
             const [mouseX] = d3.pointer(event);
             const xDate = xScale.invert(mouseX);
-            const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, xDate);
+            const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, xDate, true);
       
             tooltip
               .html(`
@@ -503,38 +519,66 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
           });
 
         // S-curve Actual
-        // const lineActual = d3
-        //   .line().x((d) => xScale(d.date))
-        //   .y((d) => yScaleRight(d.cumSumActualLabourUnit));
-        // svg
-        //   .append("path")
-        //   .datum(groupDataPoints)
-        //   .attr("class", "line planned")
-        //   .attr("d", lineActual)
-        //   .attr("fill", "none")
-        //   .attr("stroke", actualPointsColor)
-        //   .attr("stroke-width", 4)
-        //   .on("mouseenter", function () {
-        //     tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
-        //   })
-        //   .on("mousemove", function (event) {
-        //     const [mouseX] = d3.pointer(event);
-        //     const xDate = xScale.invert(mouseX);
-        //     const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, groupDataPoints, xDate);
+        const lineActual = d3
+          .line()
+          .defined(d => d.cumSumActualLabourUnit > 0)
+          .x((d) => xScale(d.date))
+          .y((d) => yScaleRight(d.cumSumActualLabourUnit));
+        svg
+          .append("path")
+          .datum(groupDataPoints)
+          .attr("class", "line planned")
+          .attr("d", lineActual)
+          .attr("fill", "none")
+          .attr("stroke", actualPointsColor)
+          .attr("stroke-width", 4)
+          .on("mouseenter", function () {
+            tooltip.style("opacity", 1).style("visibility", "visible").style("display", "block");
+          })
+          .on("mousemove", function (event) {
+            const [mouseX] = d3.pointer(event);
+            const xDate = xScale.invert(mouseX);
+            const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, xDate, false);
       
-        //     tooltip
-        //       .html(`
-        //         <strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(xDate)}<br>
-        //         <strong>Actual Units:</strong> ${yValuePlanned.toFixed(2)}<br>
-        //       `)
-        //       .style("left", `${event.pageX + 10}px`) // Offset slightly to the right
-        //       .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
-        //       .style("display", "block")
-        //       .style("visibility", "visible");
-        //   })
-        //   .on("mouseout", function () {
-        //     tooltip.style("visibility", "hidden");
-        //   });
+            tooltip
+              .html(`
+                <strong>Date:</strong> ${d3.timeFormat("%d/%m/%Y")(xDate)}<br>
+                <strong>Actual Units:</strong> ${yValuePlanned.toFixed(2)}<br>
+              `)
+              .style("left", `${event.pageX + 10}px`) // Offset slightly to the right
+              .style("top", `${event.pageY + 10}px`)  // Offset slightly below the mouse
+              .style("display", "block")
+              .style("visibility", "visible");
+          })
+          .on("mouseout", function () {
+            tooltip.style("visibility", "hidden");
+          });
+
+        const xDate = new Date(projectInfoData.statusDate);
+        const xPos = xScale(xDate);
+        const { yValuePlanned } = getActualPlannedYPoints(groupDataPoints, xDate, false);
+        const yPos = yScale(yValuePlanned);
+    
+        svg
+          .append("text")
+          .attr("class", "fix-tooltip")
+          .attr("x", xPos + 10)
+          .attr("y", yPos - 10)
+          .text(`Status Date: ${projectInfoData.statusDate}`)
+          .style("fill", "red")
+          .style("visibility", "visible");
+    
+        svg
+          .append("line")
+          .attr("class", "fix-line")
+          .attr("x1", xPos + 5)
+          .attr("y1", marginTop)
+          .attr("x2", xPos)
+          .attr("y2", height + marginTop)
+          .attr("stroke", "red")
+          .attr("stroke-dasharray", "10,10")
+          .attr("stroke-width", "3px")
+          .style("visibility", "visible");
       }
 
       // Draw the bars
@@ -547,6 +591,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
           .attr('fill', d => {
             return color(d.key)
           })
+          .attr('opacity', isDarkMode ? 0.6 : 0.75)
           .selectAll('rect')
           .data(d => d)
           .enter().append('rect')
@@ -582,13 +627,20 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
         groupDataPoints.forEach(d => {
           let total = resourceIds.reduce((sum, key) => sum + (d[key]?.cumSumPlannedLabourUnit || 0), 0);
           total = total.toFixed(2);
-          svg.append('text')
+          if (total > 0) {
+            const text = svg.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('fill', isDarkMode ? 'white' : 'black')
+                .style('font-size', 10); 
+            text.append('tspan')
+              .attr('x', xScale(new Date(d.date)) - (timeInterval !== "daily" ? 38 : 30))
+              .attr('y', yScale(total) - 13)
+              .text("P");
+            text.append('tspan')
               .attr('x', xScale(new Date(d.date)) - (timeInterval !== "daily" ? 38 : 30))
               .attr('y', yScale(total) - 3)
-              .attr('text-anchor', 'middle')
-              .attr('fill', isDarkMode ? 'white' : 'black')
-              .text(formatValues(total))
-              .style('font-size', 10);
+              .text(formatValues(total));
+          }
         });
 
         // Actual Bar plotting
@@ -635,13 +687,18 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
           let total = resourceIds.reduce((sum, key) => sum + (d[key]?.cumSumActualLabourUnit || 0), 0);
           total = total.toFixed(2);
           if (total > 0) {
-            svg.append('text')
-                .attr('x', xScale(new Date(d.date)) - (timeInterval !== "daily" ? 10 : 5))
-                .attr('y', yScale(total) - 3)
+            const text = svg.append('text')
                 .attr('text-anchor', 'middle')
                 .attr('fill', isDarkMode ? 'white' : 'black')
-                .text(formatValues(total))
                 .style('font-size', 10); 
+            text.append('tspan')
+              .attr('x', xScale(new Date(d.date)) - (timeInterval !== "daily" ? 10 : 5))
+              .attr('y', yScale(total) - 13)
+              .text("A");
+            text.append('tspan')
+              .attr('x', xScale(new Date(d.date)) - (timeInterval !== "daily" ? 10 : 5))
+              .attr('y', yScale(total) - 3)
+              .text(formatValues(total));
           }
         });
       }
@@ -674,14 +731,14 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
             .text(key);
         });
       } else if (selectedValue === "scurve") {
-        const legendItem = legendContainer.append("div")
+        const legendItemPlanned = legendContainer.append("div")
             .attr("class", "legend-item")
             .style("display", "flex")
             .style("align-items", "center")
             .style("margin-bottom", "5px");
         
           // Append a span for the color box
-          legendItem.append("span")
+          legendItemPlanned.append("span")
             .attr("class", "legend-color")
             .style("display", "inline-block")
             .style("width", "10px")
@@ -690,10 +747,31 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
             .style("margin-right", "5px");
         
           // Append a span for the label text
-          legendItem.append("span")
+          legendItemPlanned.append("span")
             .attr("class", "legend-label")
             .style("color", isDarkMode ? "white" : "black")
             .text("Planned Units");
+          
+          const legendItemActual = legendContainer.append("div")
+            .attr("class", "legend-item")
+            .style("display", "flex")
+            .style("align-items", "center")
+            .style("margin-bottom", "5px");
+        
+          // Append a span for the color box
+          legendItemActual.append("span")
+            .attr("class", "legend-color")
+            .style("display", "inline-block")
+            .style("width", "10px")
+            .style("height", "10px")
+            .style("background-color", actualPointsColor)
+            .style("margin-right", "5px");
+        
+          // Append a span for the label text
+          legendItemActual.append("span")
+            .attr("class", "legend-label")
+            .style("color", isDarkMode ? "white" : "black")
+            .text("Actual Units");
       }
 
   // If required to scroll to the end as initial position enable below line
@@ -707,6 +785,12 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
         <h3 style={styles.chartTitle}>{chartTitle}</h3>
         <div style={styles.legendFilter}>
           <div style={styles.legends}>
+            {selectedValue === "histogram" && <div style={styles.legend}>
+              P - Planned Units
+            </div>}
+            {selectedValue === "histogram" && <div style={styles.legend}>
+              A - Actual Units
+            </div>}
           </div>
           <div style={styles.dropdownContainer}>
             <div style={{ marginRight: "10px" }}>
@@ -715,7 +799,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
                   type="radio"
                   value="histogram"
                   checked={selectedValue === "histogram"}
-                  onChange={handleChangeRadio}
+                  onChange={(e) => handleChangeRadio(e)}
                 />
                 Histogram Chart
               </label>
@@ -724,7 +808,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
                   type="radio"
                   value="scurve"
                   checked={selectedValue === "scurve"}
-                  onChange={handleChangeRadio}
+                  onChange={(e) => handleChangeRadio(e)}
                 />
                 S-Curve Chart
               </label>
@@ -741,7 +825,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
           </div>
         </div>
         <div className="chart" style={{ display: "flex" }}>
-          <div ref={chartRef} style={{ position: "relative", width: "80%", margin: "auto" }} />
+          <div ref={chartRef} style={{ position: "relative", width: "84%", margin: "auto" }} />
           <div className="legends"></div>
         </div>
       </div>
@@ -766,7 +850,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
               <td style={{...styles.tdStyle, ...styles.sticky_col}}>Planned Units</td>
               {tableData.map((item, index) => (
                 <td key={index} style={styles.tdStyle}>
-                  {formatValues(item.sumPlannedLabourUnit.toFixed(2))}
+                  {formatValues(item.cumSumPlannedLabourUnit.toFixed(2))}
                 </td>
               ))}
             </tr>
@@ -775,7 +859,7 @@ const HistogramWithSCurve = ({ isDarkMode, data, tabularResourceSpreadPeriodList
               <td style={{...styles.tdStyle, ...styles.sticky_col}}>Actual Units</td>
               {tableData.map((item, index) => (
                 <td key={index} style={styles.tdStyle}>
-                  {item.sumActualLabourUnit.toFixed(2) > 0 && formatValues(item.sumActualLabourUnit.toFixed(2))}
+                  {item.cumSumActualLabourUnit.toFixed(2) > 0 && formatValues(item.cumSumActualLabourUnit.toFixed(2))}
                 </td>
               ))}
             </tr>

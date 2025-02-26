@@ -33,8 +33,8 @@ function App() {
         tabularResourceSpreadPeriodList={tabularResourceSpreadPeriodList}
         chartTitle="Histogram Chart"
         xAxisTitle="Dates"
-        yAxisTitleLeft="Planned Unit"
-        yAxisTitleRight="Planned Unit"
+        yAxisTitleLeft="Planned Unit / Actual Units"
+        yAxisTitleRight="Planned Unit / Actual Units"
         projectInfoData={projectInfoData}
       />
       <GanttChart 
