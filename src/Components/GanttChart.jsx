@@ -470,21 +470,21 @@ const GanttChart = ({ blMilestoneActivity, upMilestoneActivity, wbsData, baselin
 
     mapNewMilestones(result, groupedMilestones)
 
-    function processWBSAndMilestones(objects) {
-      let result = [];
+    // function processWBSAndMilestones(objects) {
+    //   let result = [];
   
-      for (const obj of objects) {
-        if (obj.type === "WBS" && obj.parentObjectId == null) {
-          let appendChildren = obj.children.filter(value => value.type === "WBS");
-          appendChildren = appendChildren.filter(value => value.children.length > 0);
-          result = result.concat(appendChildren);
-        } else {
-          result.push(obj);
-        }
-      }
+    //   for (const obj of objects) {
+    //     if (obj.type === "WBS" && obj.parentObjectId == null) {
+    //       let appendChildren = obj.children.filter(value => value.type === "WBS");
+    //       appendChildren = appendChildren.filter(value => value.children.length > 0);
+    //       result = result.concat(appendChildren);
+    //     } else {
+    //       result.push(obj);
+    //     }
+    //   }
   
-      return result;
-    }
+    //   return result;
+    // }
 
     // return processWBSAndMilestones(result);
     return result;
